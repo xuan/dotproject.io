@@ -21,14 +21,16 @@ domain's DNS is live.
 
 ## Custom domain (dotproject.io)
 
-Once the domain is purchased, add these DNS records at the registrar:
+Registered through **Cloudflare**. Add these DNS records in the Cloudflare dashboard
+(DNS → Records), all set to **DNS only / grey cloud** so GitHub can issue the HTTPS
+certificate:
 
 | Type  | Name  | Value                                                        |
 | ----- | ----- | ------------------------------------------------------------ |
 | A     | `@`   | `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` |
 | AAAA  | `@`   | `2606:50c0:8000::153`, `2606:50c0:8001::153`, `2606:50c0:8002::153`, `2606:50c0:8003::153` |
-| CNAME | `www` | `xuan.github.io`                                             |
+| CNAME | `www` | `dotproject.io`                                              |
 
-If the registrar supports `ALIAS`/`ANAME` at the apex, that's preferable to the A
-records. After DNS propagates, go to **Settings → Pages**, confirm the domain check
-passes, and enable **Enforce HTTPS**.
+After DNS propagates, go to **Settings → Pages**, confirm the domain check passes, and
+enable **Enforce HTTPS**. (Optional later: to use Cloudflare's proxy/CDN, set SSL/TLS
+mode to `Full` — never `Flexible` — then switch the records to proxied / orange cloud.)
