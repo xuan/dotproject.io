@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Search the stories — Dot Project</title>
+    <meta name="description" content="Search anonymized survivor comments collected by Dot Project." />
+    <meta name="robots" content="noindex" />
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      /* search page overrides the centered landing layout */
+      body { justify-content: flex-start; padding: 0; }
+      .wrap { width: 100%; max-width: 820px; margin: 0 auto; padding: 32px 16px 64px; }
+      .top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+      .top .wordmark { font-size: clamp(1.6rem, 6vw, 2.2rem); }
+      .top a { color: var(--muted); text-decoration: none; font-size: 0.85rem;
+               letter-spacing: 0.04em; text-transform: uppercase; }
+      .top a:hover { color: var(--fg); }
+      .note { margin: 18px 0 22px; font-size: 0.85rem; line-height: 1.5; color: var(--muted); }
+      .controls { position: sticky; top: 0; background: var(--bg); padding: 14px 0 12px;
+                  border-bottom: 1px solid #ececec; z-index: 5; }
+      #q { width: 100%; font-size: 1.05rem; padding: 12px 14px; border: 1px solid #d9d9d9;
+           border-radius: 10px; outline: none; color: var(--fg); background: #fff; }
+      #q:focus { border-color: var(--fg); }
+      .filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
+      .chip { font: inherit; font-size: 0.82rem; padding: 6px 12px; border: 1px solid #d9d9d9;
+              border-radius: 999px; background: #fff; color: var(--muted); cursor: pointer; }
+      .chip[aria-pressed="true"] { background: var(--fg); color: #fff; border-color: var(--fg); }
+      .count { margin-left: auto; font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
+      ul.results { list-style: none; margin: 18px 0 0; padding: 0; }
+      li.item { padding: 16px 0; border-bottom: 1px solid #f0f0f0; }
+      li.item .text { font-size: 1rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
+      li.item .text mark { background: #ffe9a8; color: inherit; padding: 0 1px; border-radius: 2px; }
+      .badges { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
+      .badge { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
+               padding: 3px 8px; border-radius: 999px; border: 1px solid #e0e0e0; color: var(--muted); }
+      .badge.under { color: #a23; border-color: #e7b3bd; }
+      .badge.adult { color: #357; border-color: #b7cbe0; }
+      .badge.inc   { color: #724; border-color: #d9b7d2; }
+      .redacted { color: #b8b8b8; font-style: italic; }
+      .more { display: block; margin: 22px auto 0; font: inherit; font-size: 0.9rem;
+              padding: 10px 20px; border: 1px solid #d9d9d9; border-radius: 10px;
+              background: #fff; color: var(--fg); cursor: pointer; }
+      .more:hover { border-color: var(--fg); }
+      .status { padding: 28px 0; color: var(--muted); font-size: 0.95rem; text-align: center; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="top">
+        <h1 class="wordmark">Dot Project<span class="dot">.</span></h1>
+        <a href="index.html">← home</a>
+      </div>
+      <p class="note">
+        These are survivors' own words, collected from a public post. Usernames, handles and
+        contact details have been removed, and names appearing in the text are redacted as
+        <span class="redacted">[name]</span>. Please read with care.
+      </p>
+
+      <div class="controls">
+        <input id="q" type="search" autocomplete="off" spellcheck="false"
+               placeholder="Search the comments…" aria-label="Search comments" />
+        <div class="filters" id="filters">
+          <button class="chip" data-f="UNDERAGE" aria-pressed="false">Underage</button>
+          <button class="chip" data-f="ADULT" aria-pressed="false">Adult</button>
+          <button class="chip" data-f="INCEST" aria-pressed="false">Family&nbsp;member</button>
+          <span class="count" id="count">loading…</span>
+        </div>
+      </div>
+
+      <ul class="results" id="results"></ul>
+      <div class="status" id="status">Loading comments…</div>
+      <button class="more" id="more" hidden>Show more</button>
+    </div>
+
+    <script>
+      "use strict";
+      const PAGE = 200;
+      const results = document.getElementById("results");
+      const statusEl = document.getElementById("status");
+      const moreBtn = document.getElementById("more");
+      const countEl = document.getElementById("count");
+      const qEl = document.getElementById("q");
+
+      let DATA = [];        // [{comment, category:[...], lc}]
+      let matches = [];     // current filtered indices
+      let shown = 0;
+      let query = "";
+      const activeFilters = new Set();
+
+      const esc = (s) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+      function highlight(text, q) {
+        let html = esc(text);
+        if (q) {
+          const re = new RegExp("(" + q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + ")", "ig");
+          html = html.replace(re, "<mark>$1</mark>");
+        }
+        // style redaction tokens
+        return html.replace(/\[(name|handle|email|link|phone)\]/g,
+          '<span class="redacted">[$1]</span>');
+      }
+
+      function badges(cat) {
+        const out = [];
+        if (cat.includes("UNDERAGE")) out.push('<span class="badge under">Underage</span>');
+        if (cat.includes("ADULT")) out.push('<span class="badge adult">Adult</span>');
+        if (cat.includes("UNDETERMINED")) out.push('<span class="badge">Undetermined</span>');
+        if (cat.includes("INCEST")) out.push('<span class="badge inc">Family member</span>');
+        return out.join("");
+      }
+
+      function passesFilter(cat) {
+        if (activeFilters.size === 0) return true;
+        for (const f of activeFilters) if (!cat.includes(f)) return false;
+        return true;
+      }
+
+      function recompute() {
+        const q = query;
+        matches = [];
+        for (let i = 0; i < DATA.length; i++) {
+          const d = DATA[i];
+          if (!passesFilter(d.category)) continue;
+          if (q && d.lc.indexOf(q) === -1) continue;
+          matches.push(i);
+        }
+        shown = 0;
+        results.innerHTML = "";
+        countEl.textContent = matches.length.toLocaleString() + " of " +
+          DATA.length.toLocaleString();
+        if (matches.length === 0) {
+          statusEl.hidden = false;
+          statusEl.textContent = "No comments match.";
+          moreBtn.hidden = true;
+          return;
+        }
+        statusEl.hidden = true;
+        renderMore();
+      }
+
+      function renderMore() {
+        const frag = document.createDocumentFragment();
+        const end = Math.min(shown + PAGE, matches.length);
+        for (let k = shown; k < end; k++) {
+          const d = DATA[matches[k]];
+          const li = document.createElement("li");
+          li.className = "item";
+          li.innerHTML = '<div class="text">' + highlight(d.comment, query) +
+            '</div><div class="badges">' + badges(d.category) + "</div>";
+          frag.appendChild(li);
+        }
+        results.appendChild(frag);
+        shown = end;
+        moreBtn.hidden = shown >= matches.length;
+      }
+
+      let t = null;
+      qEl.addEventListener("input", () => {
+        clearTimeout(t);
+        t = setTimeout(() => { query = qEl.value.trim().toLowerCase(); recompute(); }, 150);
+      });
+      document.getElementById("filters").addEventListener("click", (e) => {
+        const b = e.target.closest(".chip");
+        if (!b) return;
+        const f = b.dataset.f;
+        if (activeFilters.has(f)) { activeFilters.delete(f); b.setAttribute("aria-pressed", "false"); }
+        else { activeFilters.add(f); b.setAttribute("aria-pressed", "true"); }
+        recompute();
+      });
+      moreBtn.addEventListener("click", renderMore);
+
+      fetch("comments.json")
+        .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+        .then((arr) => {
+          DATA = arr.map((d) => ({ comment: d.comment, category: d.category,
+                                   lc: d.comment.toLowerCase() }));
+          recompute();
+        })
+        .catch(() => {
+          countEl.textContent = "";
+          statusEl.textContent = "Couldn't load comments.";
+        });
+    </script>
+  </body>
+</html>
