@@ -1,0 +1,17 @@
+# Dot Project — Jekyll site (served by GitHub Pages)
+title: "Dot Project"
+description: "Dot Project — coming soon."
+url: "https://dotproject.io"
+baseurl: ""
+
+# Build settings
+encoding: "utf-8"
+
+# Keep these out of the built site
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
+  - vendor
+  - canvas1        # raw macro-photo source set (not for publishing)
+  - canvas1.jpg    # full-res master (not for publishing)
