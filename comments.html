@@ -1,0 +1,36 @@
+---
+layout: default
+title: "Search the stories — Dot Project"
+description: "Search anonymized survivor comments collected by Dot Project."
+noindex: true
+styles:
+  - /assets/comments.css
+scripts:
+  - /assets/comments.js
+---
+<div class="wrap">
+  <div class="top">
+    <h1 class="wordmark">Dot Project<span class="dot">.</span></h1>
+    <a href="{{ '/' | relative_url }}">← home</a>
+  </div>
+  <p class="note">
+    These are survivors' own words, collected from a public post. Usernames, handles and
+    contact details have been removed, and names appearing in the text are redacted as
+    <span class="redacted">[name]</span>. Please read with care.
+  </p>
+
+  <div class="controls">
+    <input id="q" type="search" autocomplete="off" spellcheck="false"
+           placeholder="Search the comments…" aria-label="Search comments" />
+    <div class="filters" id="filters">
+      <button class="chip" data-f="UNDERAGE" aria-pressed="false">Underage</button>
+      <button class="chip" data-f="ADULT" aria-pressed="false">Adult</button>
+      <button class="chip" data-f="INCEST" aria-pressed="false">Family&nbsp;member</button>
+      <span class="count" id="count">loading…</span>
+    </div>
+  </div>
+
+  <ul class="results" id="results"></ul>
+  <div class="status" id="status">Loading comments…</div>
+  <button class="more" id="more" hidden>Show more</button>
+</div>
