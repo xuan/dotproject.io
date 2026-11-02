@@ -6,11 +6,10 @@ const moreBtn = document.getElementById("more");
 const countEl = document.getElementById("count");
 const qEl = document.getElementById("q");
 
-let DATA = [];        // [{comment, category:[...], lc}]
+let DATA = [];        // [{comment, lc}]
 let matches = [];     // current filtered indices
 let shown = 0;
 let query = "";
-const activeFilters = new Set();
 
 const esc = (s) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -25,28 +24,11 @@ function highlight(text, q) {
     '<span class="redacted">[$1]</span>');
 }
 
-function badges(cat) {
-  const out = [];
-  if (cat.includes("UNDERAGE")) out.push('<span class="badge under">Underage</span>');
-  if (cat.includes("ADULT")) out.push('<span class="badge adult">Adult</span>');
-  if (cat.includes("UNDETERMINED")) out.push('<span class="badge">Undetermined</span>');
-  if (cat.includes("INCEST")) out.push('<span class="badge inc">Family member</span>');
-  return out.join("");
-}
-
-function passesFilter(cat) {
-  if (activeFilters.size === 0) return true;
-  for (const f of activeFilters) if (!cat.includes(f)) return false;
-  return true;
-}
-
 function recompute() {
   const q = query;
   matches = [];
   for (let i = 0; i < DATA.length; i++) {
-    const d = DATA[i];
-    if (!passesFilter(d.category)) continue;
-    if (q && d.lc.indexOf(q) === -1) continue;
+    if (q && DATA[i].lc.indexOf(q) === -1) continue;
     matches.push(i);
   }
   shown = 0;
@@ -70,8 +52,7 @@ function renderMore() {
     const d = DATA[matches[k]];
     const li = document.createElement("li");
     li.className = "item";
-    li.innerHTML = '<div class="text">' + highlight(d.comment, query) +
-      '</div><div class="badges">' + badges(d.category) + "</div>";
+    li.innerHTML = '<div class="text">' + highlight(d.comment, query) + "</div>";
     frag.appendChild(li);
   }
   results.appendChild(frag);
@@ -84,21 +65,17 @@ qEl.addEventListener("input", () => {
   clearTimeout(t);
   t = setTimeout(() => { query = qEl.value.trim().toLowerCase(); recompute(); }, 150);
 });
-document.getElementById("filters").addEventListener("click", (e) => {
-  const b = e.target.closest(".chip");
-  if (!b) return;
-  const f = b.dataset.f;
-  if (activeFilters.has(f)) { activeFilters.delete(f); b.setAttribute("aria-pressed", "false"); }
-  else { activeFilters.add(f); b.setAttribute("aria-pressed", "true"); }
-  recompute();
-});
 moreBtn.addEventListener("click", renderMore);
+
+// Seed the box from ?q= so the front-page "Search for your comment" hands off here.
+const initialQ = new URLSearchParams(location.search).get("q");
+if (initialQ) qEl.value = initialQ;
 
 fetch("comments.json")
   .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
   .then((arr) => {
-    DATA = arr.map((d) => ({ comment: d.comment, category: d.category,
-                             lc: d.comment.toLowerCase() }));
+    DATA = arr.map((d) => ({ comment: d.comment, lc: d.comment.toLowerCase() }));
+    query = qEl.value.trim().toLowerCase();
     recompute();
   })
   .catch(() => {
