@@ -9,9 +9,12 @@
   box-sizing: border-box;
 }
 
+html {
+  height: 100%;
+}
+
 html,
 body {
-  height: 100%;
   margin: 0;
 }
 
@@ -111,6 +114,64 @@ main {
 
 .search button:hover {
   opacity: 0.85;
+}
+
+.reveal {
+  margin: 2.25rem 0 0;
+  width: min(440px, 100%);
+}
+
+.canvas-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 12px;
+}
+
+.canvas-link:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 4px;
+}
+
+.reveal img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.canvas-link:hover img,
+.canvas-link:focus-visible img {
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+  transform: translateY(-2px);
+}
+
+.canvas-cta {
+  display: block;
+  margin-top: 0.85rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  transition: color 0.2s ease;
+}
+
+.canvas-link:hover .canvas-cta,
+.canvas-link:focus-visible .canvas-cta {
+  color: var(--fg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal img,
+  .canvas-cta {
+    transition: none;
+  }
+
+  .canvas-link:hover img,
+  .canvas-link:focus-visible img {
+    transform: none;
+  }
 }
 
 footer {

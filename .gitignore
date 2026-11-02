@@ -18,7 +18,12 @@ Gemfile.lock
 vendor/
 serve.log
 
-# Large image working files (stitch source + master) — not for the repo
-canvas1/
-canvas1.jpg
+# Large image working files — the raw macro-photo set + full-res masters stay out of
+# the repo. Only the small web derivatives (canvas1-<width>.jpg) are tracked & published.
+# (Negation needs the parent dir itself un-ignored, so ignore its *contents*, not the dir.)
+images/canvas1/*
+!images/canvas1/canvas1-480.jpg
+!images/canvas1/canvas1-720.jpg
+!images/canvas1/canvas1-960.jpg
+!images/canvas1/canvas1-1440.jpg
 canvas1_stitch/
