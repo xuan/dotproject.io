@@ -1,0 +1,116 @@
+# CLAUDE.md
+
+Context for working on **dotproject.io** — the public website for the Dot Project.
+
+## Working agreement (read first)
+
+**Ask before changing anything unless you are ≥90% confident you understand the task.**
+When the request is ambiguous, underspecified, or could be interpreted more than one way,
+stop and ask clarifying questions *before* editing files, running destructive commands, or
+deploying. Only proceed without asking when the intent is unmistakable. A quick question is
+always cheaper than undoing the wrong change on a live site.
+
+Related standing rules:
+
+- **Nothing is committed or deployed without explicit say-so.** Make changes locally, show
+  them (a local `jekyll serve` preview is ideal), and wait for approval before
+  commit/push — pushing to `main` redeploys the live site (see [Deploy](#deploy)).
+- **Never commit or publish the large image working files** — see
+  [Do not commit / publish](#do-not-commit--publish).
+
+## What this is
+
+A small, static **Jekyll** site hosted on **GitHub Pages**, live at **<https://dotproject.io>**
+(custom domain, HTTPS enforced). It is intentionally minimal: a "coming soon" landing page plus
+a client-side search over anonymized survivor comments.
+
+Tracked files:
+
+```text
+_config.yml            site config (title, url, baseurl="", exclude list)
+_layouts/default.html  shared page shell: <head>, global stylesheet, per-page styles:/scripts:
+index.html             landing page — wordmark + "Search for your comment" form
+comments.html          results page — client-side search UI (front matter + body)
+404.html               not-found page (permalink: /404.html)
+assets/comments.css    styles for the results page
+assets/comments.js     client-side search over comments.json
+style.css              global styles (landing page + shared tokens in :root)
+comments.json          search data — ~11.6 MB, ~49,865 records (tracked, served as-is)
+Gemfile                github-pages gem + webrick
+.ruby-version          3.3.13 (matches the Ruby GitHub Pages runs)
+CNAME                  dotproject.io
+```
+
+Each page carries YAML front matter (`layout: default`, `title`, `description`, optional
+`noindex`, `styles:`, `scripts:`) and contributes only its body; the layout supplies the
+`<head>` and shell.
+
+## Build & run locally
+
+Needs **Ruby ≥ 3.0** (system Ruby 2.6 is too old). With rbenv, `cd`-ing in selects 3.3.13 from
+`.ruby-version`. One-time: `bundle install`. Then:
+
+```sh
+bundle exec jekyll serve      # → http://localhost:4000 (rebuilds on save)
+bundle exec jekyll build      # → _site/ (what Pages produces)
+```
+
+**The pages are Liquid templates — they must be built by Jekyll.** Opening the `.html` files
+directly or via `python3 -m http.server` will not work (unrendered `{{ }}` / `{% %}`, and
+`relative_url` paths won't resolve).
+
+**macOS native-gem gotcha:** if `bundle install` fails compiling `ffi` with a linker/SDK error
+(`ld: … unknown architecture`, "C compiler cannot create executables"), the Command Line Tools
+SDK is broken — point the build at Xcode's SDK and add it to `~/.zshrc`:
+
+```sh
+export SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+```
+
+## Deploy
+
+**Automatic from `main`.** GitHub Pages is set to *Deploy from a branch* (`main` / `/root`)
+and runs the Jekyll build **server-side** using the same `github-pages` gem versions, so a clean
+local `bundle exec jekyll build` predicts a clean deploy. A push to `main` goes live in ~1–2 min;
+watch the repo's **Actions** tab, or `gh api repos/<owner>/dotproject.io/pages/builds/latest`.
+
+- There is deliberately **no `.nojekyll` file** — that file would disable the server-side Jekyll
+  build. Don't add one.
+- `baseurl` is `""`, so `{{ '/x' | relative_url }}` yields root-relative `/x`. Keep using
+  `relative_url` for internal links/assets rather than hardcoding.
+
+## How the comment search works
+
+Two pages, one dataset, deliberately split so the heavy JSON never loads on the landing page:
+
+- **index.html** has a plain `<form method="get" action="/comments.html">` with an input
+  `name="q"`. Submitting navigates to `comments.html?q=<text>` — **no JavaScript on the landing
+  page**, and the ~11.6 MB `comments.json` is *not* fetched there.
+- **comments.html** (`assets/comments.js`) `fetch`es `comments.json`, reads `?q=` from the URL
+  to seed the box, and does an in-memory substring search, paginating 200 results at a time.
+- `comments.json` records are `{comment, category:[...]}`. The UI currently shows **only the
+  comment text** — category tags/badges and the category filter chips were intentionally removed.
+  `category` still exists in the data; don't rely on it being displayed.
+- `comments.js` styles redaction tokens (`[name]`, `[handle]`, `[email]`, `[link]`, `[phone]`)
+  and highlights the query. The source comments are already anonymized.
+
+## Do not commit / publish
+
+These are git-ignored and must **never** be committed or published anywhere:
+
+- `canvas1/` — the raw close-up macro photo set (hundreds of large frames).
+- `canvas1.jpg` — the full-resolution master photograph.
+- `canvas1_stitch/` — stitching working files / handoff.
+
+They are source material for a gigapixel image being assembled with external tools, not web
+assets. Also keep `_site/`, `.jekyll-cache/`, `Gemfile.lock`, and `vendor/` out of commits
+(already in `.gitignore`).
+
+## Git workflow & attribution
+
+- Branch off, commit, **merge to `main`**, push `main` (and keep `develop` in sync). Don't commit
+  straight onto `main`/`develop` for feature work.
+- End commit messages with:
+  `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>`
+- End PR descriptions with:
+  `🤖 Generated with [Claude Code](https://claude.com/claude-code)`

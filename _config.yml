@@ -10,6 +10,7 @@ encoding: "utf-8"
 # Keep these out of the built site
 exclude:
   - README.md
+  - CLAUDE.md
   - Gemfile
   - Gemfile.lock
   - vendor
