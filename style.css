@@ -70,6 +70,49 @@ main {
   border-color: var(--fg);
 }
 
+.search {
+  margin: 1.9rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(440px, 100%);
+}
+
+.search input {
+  font: inherit;
+  font-size: 1rem;
+  padding: 13px 15px;
+  border: 1px solid #d9d9d9;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--fg);
+  outline: none;
+  text-align: center;
+}
+
+.search input::placeholder {
+  color: var(--muted);
+}
+
+.search input:focus {
+  border-color: var(--fg);
+}
+
+.search button {
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 12px 18px;
+  border: 1px solid var(--fg);
+  border-radius: 10px;
+  background: var(--fg);
+  color: #fff;
+  cursor: pointer;
+}
+
+.search button:hover {
+  opacity: 0.85;
+}
+
 footer {
   flex: 0 0 auto;
   padding-top: 24px;

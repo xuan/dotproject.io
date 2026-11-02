@@ -6,7 +6,12 @@ description: "Dot Project — coming soon."
 <main>
   <h1 class="wordmark">Dot Project<span class="dot">.</span></h1>
   <p class="tagline">Something is coming.</p>
-  <p class="tagline"><a href="{{ '/comments.html' | relative_url }}">Search the stories &rarr;</a></p>
+  <form class="search" action="{{ '/comments.html' | relative_url }}" method="get" role="search">
+    <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
+           placeholder="Search for a line you remember writing…"
+           aria-label="Search for your comment" />
+    <button type="submit">Search for your comment</button>
+  </form>
 </main>
 <footer>
   <span>dotproject.io</span>

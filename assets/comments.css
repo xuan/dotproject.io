@@ -12,21 +12,11 @@ body { justify-content: flex-start; padding: 0; }
 #q { width: 100%; font-size: 1.05rem; padding: 12px 14px; border: 1px solid #d9d9d9;
      border-radius: 10px; outline: none; color: var(--fg); background: #fff; }
 #q:focus { border-color: var(--fg); }
-.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
-.chip { font: inherit; font-size: 0.82rem; padding: 6px 12px; border: 1px solid #d9d9d9;
-        border-radius: 999px; background: #fff; color: var(--muted); cursor: pointer; }
-.chip[aria-pressed="true"] { background: var(--fg); color: #fff; border-color: var(--fg); }
-.count { margin-left: auto; font-size: 0.82rem; color: var(--muted); white-space: nowrap; }
+.count { display: block; margin-top: 10px; font-size: 0.82rem; color: var(--muted); }
 ul.results { list-style: none; margin: 18px 0 0; padding: 0; }
 li.item { padding: 16px 0; border-bottom: 1px solid #f0f0f0; }
 li.item .text { font-size: 1rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
 li.item .text mark { background: #ffe9a8; color: inherit; padding: 0 1px; border-radius: 2px; }
-.badges { margin-top: 8px; display: flex; gap: 6px; flex-wrap: wrap; }
-.badge { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
-         padding: 3px 8px; border-radius: 999px; border: 1px solid #e0e0e0; color: var(--muted); }
-.badge.under { color: #a23; border-color: #e7b3bd; }
-.badge.adult { color: #357; border-color: #b7cbe0; }
-.badge.inc   { color: #724; border-color: #d9b7d2; }
 .redacted { color: #b8b8b8; font-style: italic; }
 .more { display: block; margin: 22px auto 0; font: inherit; font-size: 0.9rem;
         padding: 10px 20px; border: 1px solid #d9d9d9; border-radius: 10px;
