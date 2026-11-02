@@ -14,5 +14,6 @@ exclude:
   - Gemfile
   - Gemfile.lock
   - vendor
-  - canvas1        # raw macro-photo source set (not for publishing)
-  - canvas1.jpg    # full-res master (not for publishing)
+  # Full-res masters live beside the web derivatives; keep only the masters out of the build.
+  - images/canvas1/canvas1.jpg
+  - images/canvas1/canvas1_4x.jpg

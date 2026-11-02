@@ -29,7 +29,8 @@ Tracked files:
 ```text
 _config.yml            site config (title, url, baseurl="", exclude list)
 _layouts/default.html  shared page shell: <head>, global stylesheet, per-page styles:/scripts:
-index.html             landing page — wordmark + "Search for your comment" form
+index.html             landing page — wordmark + search form + responsive canvas image
+images/canvas1/        canvas1-{480,720,960,1440}.jpg web derivatives (tracked); masters ignored
 comments.html          results page — client-side search UI (front matter + body)
 404.html               not-found page (permalink: /404.html)
 assets/comments.css    styles for the results page
@@ -96,15 +97,30 @@ Two pages, one dataset, deliberately split so the heavy JSON never loads on the 
 
 ## Do not commit / publish
 
-These are git-ignored and must **never** be committed or published anywhere:
+The raw sources are git-ignored and must **never** be committed or published anywhere:
 
-- `canvas1/` — the raw close-up macro photo set (hundreds of large frames).
-- `canvas1.jpg` — the full-resolution master photograph.
+- `images/canvas1/canvas1.jpg` — the full-resolution master photograph (~11 MB).
+- `images/canvas1/canvas1_4x.jpg` — the 4× upscaled master (~65 MB).
+- the raw close-up macro photo set (hundreds of large frames), wherever it lands under
+  `images/canvas1/`.
 - `canvas1_stitch/` — stitching working files / handoff.
 
 They are source material for a gigapixel image being assembled with external tools, not web
-assets. Also keep `_site/`, `.jekyll-cache/`, `Gemfile.lock`, and `vendor/` out of commits
-(already in `.gitignore`).
+assets. `.gitignore` ignores **everything** under `images/canvas1/` and then re-includes only the
+small web derivatives by name, so a new master/frame dropped in there stays private by default.
+`_config.yml` separately excludes the two named masters from the Jekyll build (the sources aren't in
+git, so a server build never sees them anyway — but don't re-add a bare `images/canvas1` exclude: it
+greedily drops the whole `images/` tree, derivatives included).
+
+**What IS published** (tracked and served): the resized/compressed web derivatives
+`images/canvas1/canvas1-{480,720,960,1440}.jpg` (~0.14–1.0 MB each), shown on the landing page via a
+responsive `<img srcset>` with `loading="lazy"`. Regenerate them from the master with `sips`
+(`--resampleWidth <w>`) piped through `cjpeg -quality 72 -progressive -optimize`. **Adding a new
+size means three edits:** generate the file, add a `!images/canvas1/canvas1-<w>.jpg` line to
+`.gitignore`, and add it to the `srcset` in `index.html`.
+
+Also keep `_site/`, `.jekyll-cache/`, `Gemfile.lock`, and `vendor/` out of commits (already in
+`.gitignore`).
 
 ## Git workflow & attribution
 

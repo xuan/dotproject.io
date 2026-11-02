@@ -5,13 +5,28 @@ description: "Dot Project — coming soon."
 ---
 <main>
   <h1 class="wordmark">Dot Project<span class="dot">.</span></h1>
-  <p class="tagline">Something is coming.</p>
+  <p class="tagline">Search for your comment, or open the canvas to browse them all.</p>
   <form class="search" action="{{ '/comments.html' | relative_url }}" method="get" role="search">
     <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
            placeholder="Search for a line you remember writing…"
            aria-label="Search for your comment" />
     <button type="submit">Search for your comment</button>
   </form>
+  <figure class="reveal">
+    <a class="canvas-link" href="{{ '/comments.html' | relative_url }}" aria-label="Browse all comments">
+      <img
+      src="{{ '/images/canvas1/canvas1-960.jpg' | relative_url }}"
+      srcset="{{ '/images/canvas1/canvas1-480.jpg' | relative_url }} 480w,
+              {{ '/images/canvas1/canvas1-720.jpg' | relative_url }} 720w,
+              {{ '/images/canvas1/canvas1-960.jpg' | relative_url }} 960w,
+              {{ '/images/canvas1/canvas1-1440.jpg' | relative_url }} 1440w"
+      sizes="(max-width: 500px) calc(100vw - 64px), 440px"
+      width="3775" height="5088"
+      loading="lazy" decoding="async"
+      alt="Dot Project — the canvas" />
+      <span class="canvas-cta">Browse all comments →</span>
+    </a>
+  </figure>
 </main>
 <footer>
   <span>dotproject.io</span>
