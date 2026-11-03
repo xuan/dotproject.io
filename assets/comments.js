@@ -10,6 +10,7 @@ let DATA = [];        // [{comment, lc}]
 let matches = [];     // current filtered indices
 let shown = 0;
 let query = "";
+let dotOf = null;     // comment index -> dot index on canvas1 (-1 if not on the canvas)
 
 const esc = (s) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -53,6 +54,14 @@ function renderMore() {
     const li = document.createElement("li");
     li.className = "item";
     li.innerHTML = '<div class="text">' + highlight(d.comment, query) + "</div>";
+    const ci = matches[k];
+    if (dotOf && ci < dotOf.length && dotOf[ci] >= 0) {
+      const a = document.createElement("a");
+      a.className = "loc";
+      a.href = "canvas.html?dot=" + dotOf[ci];
+      a.textContent = "Find this dot on the canvas →";
+      li.appendChild(a);
+    }
     frag.appendChild(li);
   }
   results.appendChild(frag);
@@ -70,6 +79,20 @@ moreBtn.addEventListener("click", renderMore);
 // Seed the box from ?q= so the front-page "Search for your comment" hands off here.
 const initialQ = new URLSearchParams(location.search).get("q");
 if (initialQ) qEl.value = initialQ;
+
+// Which comments have a painted dot on the canvas (for "find this dot" links).
+// Small file; loads well before the big comments.json below.
+fetch("assets/canvas1/dots.json")
+  .then((r) => (r.ok ? r.json() : null))
+  .then((d) => {
+    if (!d || !d.ci) return;
+    let max = 0;
+    for (const c of d.ci) if (c > max) max = c;
+    dotOf = new Int32Array(max + 1).fill(-1);
+    for (let i = 0; i < d.ci.length; i++) dotOf[d.ci[i]] = i;
+    if (DATA.length) recompute();   // re-render with links if results already shown
+  })
+  .catch(() => {});
 
 fetch("comments.json")
   .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
