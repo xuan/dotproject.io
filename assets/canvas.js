@@ -59,7 +59,7 @@ function init() {
   viewer.addHandler("resize", () => { resizeOverlay(); draw(); });
   viewer.addHandler("canvas-click", onClick);
   window.addEventListener("resize", () => { resizeOverlay(); draw(); });
-  window.addEventListener("keydown", onKey);
+  window.addEventListener("keydown", onKey, true);   // capture: beat OSD's own arrow-key panning
 
   wireControls();
   loadData();
@@ -143,13 +143,54 @@ function onClick(e) {
   select(hit);
 }
 
+const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+
 function onKey(e) {
   if (e.key === "Escape") {
     viewer.viewport.goHome();              // reset zoom
     document.getElementById("panel").classList.remove("open");
     selected = -2;
     draw();
+    return;
   }
+  const dir = ARROWS[e.key];
+  if (!dir || selected === -2 || !buckets) return;
+  e.preventDefault(); e.stopPropagation();
+  const next = neighbour(selected, dir);
+  if (next !== -2) { select(next); keepInView(next); }
+}
+
+/* nearest dot in a direction: left/right stay in the same straight row, up/down stay in the
+   same column (the hex diagonals at ~27deg are excluded by the narrow cone) */
+function neighbour(id, [dx, dy]) {
+  const x0 = id === -1 ? D.origin[0] : D.x[id];
+  const y0 = id === -1 ? D.origin[1] : D.y[id];
+  const gh = buckets.length / gw, R = 6;     // search ~6 cells: enough to hop the centre clearing
+  const cx = Math.floor(x0 / cell), cy = Math.floor(y0 / cell);
+  let best = -2, bs = Infinity;
+  for (let yy = cy - R; yy <= cy + R; yy++) {
+    for (let xx = cx - R; xx <= cx + R; xx++) {
+      if (xx < 0 || yy < 0 || xx >= gw || yy >= gh) continue;
+      const arr = buckets[yy * gw + xx];
+      if (!arr) continue;
+      for (const i of arr) {
+        if (i === id) continue;
+        const vx = D.x[i] - x0, vy = D.y[i] - y0;
+        const along = vx * dx + vy * dy, perp = Math.abs(vx * dy - vy * dx);
+        if (along <= 0 || perp > along * 0.3) continue;
+        const s = along + 2 * perp;
+        if (s < bs) { bs = s; best = i; }
+      }
+    }
+  }
+  return best;
+}
+
+/* pan only when the selected dot drifts near the edge of the view */
+function keepInView(id) {
+  const b = tiledImage.viewportToImageRectangle(viewer.viewport.getBounds(true));
+  const mx = b.width * 0.15, my = b.height * 0.15, x = D.x[id], y = D.y[id];
+  if (x < b.x + mx || x > b.x + b.width - mx || y < b.y + my || y > b.y + b.height - my) panTo(id);
 }
 
 function select(id) {
