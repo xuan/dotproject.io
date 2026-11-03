@@ -6,7 +6,8 @@
 
 const BASE = "assets/canvas1/";
 const SELECT_RADIUS = 30;          // image px: how near a click must be to grab a dot
-const LINK_ZOOM = 7;               // zoom level used when flying to a linked/selected dot
+const LINK_ZOOM = 3.5;             // zoom level used when flying to a linked/selected dot
+const OPEN_ZOOM = 2;               // fresh-open zoom (x the fit-to-view home zoom)
 
 let viewer, tiledImage, D = null, TEXTS = null;
 let overlay, octx, dpr = 1;
@@ -45,7 +46,13 @@ function init() {
     document.getElementById("loading").classList.add("hide");
     resizeOverlay();
     draw();
-    tryPending();
+    if (pendingDot !== null) {
+      tryPending();
+    } else {
+      // fresh open (e.g. clicking the canvas on the landing page): start zoomed in
+      viewer.viewport.zoomTo(viewer.viewport.getHomeZoom() * OPEN_ZOOM, null, true);
+      viewer.viewport.applyConstraints(true);
+    }
   });
   viewer.addHandler("animation", draw);
   viewer.addHandler("update-viewport", draw);
