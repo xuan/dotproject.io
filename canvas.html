@@ -23,17 +23,7 @@ scripts:
     <div class="cv-tools">
       <button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
       <button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button>
-      <button id="zhome" title="Reset view" aria-label="Reset view">&#9678;</button>
-    </div>
-
-    <div class="cv-legend">
-      <button id="t-cats" class="chip toggle" aria-pressed="false">Highlight dots</button>
-      <div class="cv-chiprow" id="chiprow" hidden>
-        <button class="chip filter under" data-cat="0" aria-pressed="true"><span class="sw"></span>Underage</button>
-        <button class="chip filter adult" data-cat="1" aria-pressed="true"><span class="sw"></span>Adult</button>
-        <button class="chip filter family" data-cat="2" aria-pressed="true"><span class="sw"></span>Family</button>
-      </div>
-      <span class="cv-hint">Tap any dot</span>
+      <button id="zhome" title="Reset view (Esc)" aria-label="Reset view">&#9678;</button>
     </div>
   </div>
 
@@ -44,12 +34,11 @@ scripts:
     </div>
     <div class="cv-body">
       <div class="cv-text" id="p-text"></div>
-      <div class="cv-meta" id="p-meta"></div>
     </div>
     <p class="cv-note" id="p-note" hidden></p>
     <div class="cv-nav" id="p-nav" hidden>
-      <button id="p-prev">&larr; Previous dot</button>
-      <button id="p-next">Next dot &rarr;</button>
+      <button id="p-prev">&larr; Previous</button>
+      <button id="p-next">Next &rarr;</button>
     </div>
   </aside>
 </div>

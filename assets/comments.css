@@ -17,6 +17,9 @@ ul.results { list-style: none; margin: 18px 0 0; padding: 0; }
 li.item { padding: 16px 0; border-bottom: 1px solid #f0f0f0; }
 li.item .text { font-size: 1rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
 li.item .text mark { background: #ffe9a8; color: inherit; padding: 0 1px; border-radius: 2px; }
+li.item .loc { display: inline-block; margin-top: 9px; font-size: 0.82rem; color: var(--muted);
+               text-decoration: none; border-bottom: 1px solid #e3e3e3; padding-bottom: 1px; }
+li.item .loc:hover { color: var(--fg); border-color: var(--fg); }
 .redacted { color: #b8b8b8; font-style: italic; }
 .more { display: block; margin: 22px auto 0; font: inherit; font-size: 0.9rem;
         padding: 10px 20px; border: 1px solid #d9d9d9; border-radius: 10px;

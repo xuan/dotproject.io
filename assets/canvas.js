@@ -1,23 +1,19 @@
 "use strict";
 /* Dot Project — canvas viewer.
    Deep-zoom the painted canvas (OpenSeadragon tiles) and open any dot to read the
-   survivor comment mapped to it. Dot positions were detected from the painting;
-   each dot is linked to a real comment of its own category (red = underage/family,
-   blue = adult), in the canvas reading order (left-to-right, then right-to-left).  */
+   survivor comment mapped to it. Arriving with ?dot=N selects and flies to dot N
+   (used by the search page's "show on the canvas" links). Esc resets the view. */
 
 const BASE = "assets/canvas1/";
-const CAT = { 0: "under", 1: "adult", 2: "family" };
-const CAT_LABEL = { 0: "Underage", 1: "Adult", 2: "Family / incest" };
-const CAT_COLOR = { 0: "#d6283b", 1: "#1f50d0", 2: "#8c1d2e" };
 const SELECT_RADIUS = 30;          // image px: how near a click must be to grab a dot
+const LINK_ZOOM = 7;               // zoom level used when flying to a linked/selected dot
 
 let viewer, tiledImage, D = null, TEXTS = null;
 let overlay, octx, dpr = 1;
 let buckets = null, cell = 48, gw = 0;
-let showCats = false;
-const catOn = { 0: true, 1: true, 2: true };
 let selected = -2;                 // -2 none, -1 origin, >=0 dot index
 let readOrder = null, orderPos = null;
+let pendingDot = null;             // deep-link (?dot=N) target, resolved once ready
 
 /* ---------- boot ---------- */
 window.addEventListener("load", init);
@@ -35,8 +31,8 @@ function init() {
     minZoomImageRatio: 0.8,
     gestureSettingsMouse: { clickToZoom: false, dblClickToZoom: true },
     gestureSettingsTouch: { clickToZoom: false },
-    animationTime: 0.5,
-    springStiffness: 7,
+    animationTime: 0.6,
+    springStiffness: 6.5,
   });
 
   overlay = document.createElement("canvas");
@@ -49,18 +45,24 @@ function init() {
     document.getElementById("loading").classList.add("hide");
     resizeOverlay();
     draw();
+    tryPending();
   });
   viewer.addHandler("animation", draw);
   viewer.addHandler("update-viewport", draw);
   viewer.addHandler("resize", () => { resizeOverlay(); draw(); });
   viewer.addHandler("canvas-click", onClick);
   window.addEventListener("resize", () => { resizeOverlay(); draw(); });
+  window.addEventListener("keydown", onKey);
 
   wireControls();
   loadData();
 
-  // minimal hook for console debugging / future deep-links
-  window.__cv = { viewer, select, panTo, data: () => D };
+  // deep-link: ?dot=N  (the search page links here)
+  const dp = new URLSearchParams(location.search).get("dot");
+  if (dp !== null && dp !== "") pendingDot = parseInt(dp, 10);
+
+  // minimal hook for console debugging / deep-links
+  window.__cv = { viewer, select, goToDot, data: () => D };
 }
 
 /* ---------- data ---------- */
@@ -69,10 +71,11 @@ function loadData() {
     D = d;
     buildIndex();
     draw();
+    tryPending();
   }).catch(() => {});
   fetch(BASE + "texts.json").then(r => r.json()).then(t => {
     TEXTS = t;
-    if (selected >= 0) renderPanel(selected);   // fill in if a dot was tapped early
+    if (selected >= 0) renderPanel(selected);   // fill in if a dot was opened early
   }).catch(() => {});
 }
 
@@ -84,17 +87,25 @@ function buildIndex() {
     const b = Math.floor(D.y[i] / cell) * gw + Math.floor(D.x[i] / cell);
     (buckets[b] || (buckets[b] = [])).push(i);
   }
-  // exact reading order (serpentine rows), precomputed in the data pipeline:
-  // D.read[i] is dot i's rank along the reading path.
+  // exact reading order (serpentine rows), precomputed in the data pipeline.
   orderPos = D.read;
   readOrder = new Int32Array(D.n);
   for (let i = 0; i < D.n; i++) readOrder[D.read[i]] = i;
 }
 
-/* nearest dot to an image-space point, honoring category filter when overlay on */
+function tryPending() {
+  if (pendingDot === null || !tiledImage || !D) return;
+  const id = pendingDot;
+  pendingDot = null;
+  if (Number.isInteger(id) && id >= 0 && id < D.n) {
+    select(id);
+    goToDot(id);
+  }
+}
+
+/* nearest dot to an image-space point */
 function nearestDot(ix, iy) {
   if (!buckets) return -2;
-  // origin first
   if (D.origin) {
     const dx = ix - D.origin[0], dy = iy - D.origin[1];
     if (dx * dx + dy * dy < 24 * 24) return -1;
@@ -107,7 +118,6 @@ function nearestDot(ix, iy) {
       const arr = buckets[yy * gw + xx];
       if (!arr) continue;
       for (const i of arr) {
-        if (showCats && !catOn[D.cat[i]]) continue;
         const dx = ix - D.x[i], dy = iy - D.y[i], dd = dx * dx + dy * dy;
         if (dd < bd) { bd = dd; best = i; }
       }
@@ -126,6 +136,15 @@ function onClick(e) {
   select(hit);
 }
 
+function onKey(e) {
+  if (e.key === "Escape") {
+    viewer.viewport.goHome();              // reset zoom
+    document.getElementById("panel").classList.remove("open");
+    selected = -2;
+    draw();
+  }
+}
+
 function select(id) {
   selected = id;
   renderPanel(id);
@@ -136,11 +155,11 @@ function renderPanel(id) {
   const panel = document.getElementById("panel");
   const catEl = document.getElementById("p-cat");
   const textEl = document.getElementById("p-text");
-  const metaEl = document.getElementById("p-meta");
   const noteEl = document.getElementById("p-note");
   const nav = document.getElementById("p-nav");
 
   if (id === -1) {
+    catEl.hidden = false;
     catEl.className = "cv-cat origin";
     catEl.innerHTML = '<span class="sw"></span>The first Jane Doe';
     textEl.textContent = "The black dot at the heart of the canvas.";
@@ -148,20 +167,13 @@ function renderPanel(id) {
       "This dot is the origin — the first Jane Doe. It stands for her, not for a " +
       "comment, and the canvas grows outward from here.";
     noteEl.hidden = false;
-    metaEl.textContent = "";
     nav.hidden = true;
   } else {
-    const c = D.cat[id];
-    catEl.className = "cv-cat " + CAT[c];
-    catEl.innerHTML = '<span class="sw"></span>' + CAT_LABEL[c];
+    catEl.hidden = false;                  // show the dot's grid position (no category)
+    catEl.className = "cv-pos";
+    catEl.textContent = "Row " + D.row[id] + " · Col " + D.col[id];
     noteEl.hidden = true;
-    if (TEXTS) {
-      textEl.innerHTML = renderText(TEXTS[id]);
-    } else {
-      textEl.textContent = "Loading…";
-    }
-    metaEl.textContent = "Dot " + (orderPos[id] + 1).toLocaleString() +
-      " of " + D.n.toLocaleString();
+    textEl.innerHTML = TEXTS ? renderText(TEXTS[id]) : "Loading…";
     nav.hidden = false;
   }
   panel.classList.add("open");
@@ -188,6 +200,15 @@ function panTo(id) {
   viewer.viewport.panTo(vp);
 }
 
+/* fly to a dot: zoom in and centre it (used by deep-links) */
+function goToDot(id) {
+  const vp = tiledImage.imageToViewportCoordinates(
+    new OpenSeadragon.Point(D.x[id], D.y[id]));
+  viewer.viewport.zoomTo(LINK_ZOOM);
+  viewer.viewport.panTo(vp);
+  viewer.viewport.applyConstraints();
+}
+
 /* ---------- overlay drawing ---------- */
 function resizeOverlay() {
   dpr = window.devicePixelRatio || 1;
@@ -202,44 +223,21 @@ function draw() {
   if (!octx) return;
   octx.setTransform(dpr, 0, 0, dpr, 0, 0);
   octx.clearRect(0, 0, overlay.width, overlay.height);
-  if (!D || !tiledImage) { if (selected !== -2) drawSelection(); return; }
-
-  // affine image->screen from two reference points (no rotation in use)
-  const o = pxFromImage(0, 0), ex = pxFromImage(D.w, 0), ey = pxFromImage(0, D.h);
-  const sx = (ex.x - o.x) / D.w, sy = (ey.y - o.y) / D.h;
-  const rScreen = 16 * sx;                       // painted dot radius ~16 img px
-
-  if (showCats && rScreen > 0.6) {
-    const W = overlay.width / dpr, H = overlay.height / dpr;
-    const rr = Math.max(1.1, rScreen * 0.82);
-    for (let i = 0; i < D.n; i++) {
-      const c = D.cat[i];
-      if (!catOn[c]) continue;
-      const px = o.x + D.x[i] * sx, py = o.y + D.y[i] * sy;
-      if (px < -5 || py < -5 || px > W + 5 || py > H + 5) continue;
-      octx.beginPath();
-      octx.arc(px, py, rr, 0, 6.2832);
-      octx.fillStyle = CAT_COLOR[c];
-      octx.globalAlpha = 0.9;
-      octx.fill();
-    }
-    octx.globalAlpha = 1;
-  }
-  drawSelection(o, sx, sy, rScreen);
+  if (selected !== -2 && D && tiledImage) drawSelection();
 }
 
-function drawSelection(o, sx, sy, rScreen) {
-  if (selected === -2 || !D) return;
-  let ix, iy, col;
+function drawSelection() {
+  let ix, iy;
   if (selected === -1) {
     if (!D.origin) return;
-    ix = D.origin[0]; iy = D.origin[1]; col = "#111";
+    ix = D.origin[0]; iy = D.origin[1];
   } else {
-    ix = D.x[selected]; iy = D.y[selected]; col = CAT_COLOR[D.cat[selected]];
+    ix = D.x[selected]; iy = D.y[selected];
   }
-  if (!o) { o = pxFromImage(0, 0); const ex = pxFromImage(D.w, 0), ey = pxFromImage(0, D.h);
-            sx = (ex.x - o.x) / D.w; sy = (ey.y - o.y) / D.h; rScreen = 16 * sx; }
-  const px = o.x + ix * sx, py = o.y + iy * sy;
+  const o = pxFromImage(0, 0), ex = pxFromImage(D.w, 0);
+  const sx = (ex.x - o.x) / D.w;
+  const rScreen = 16 * sx;
+  const px = o.x + ix * sx, py = o.y + iy * (sx);  // sx==sy (uniform scale)
   const r = Math.max(9, rScreen + 6);
   octx.beginPath(); octx.arc(px, py, r, 0, 6.2832);
   octx.lineWidth = 3; octx.strokeStyle = "#111"; octx.stroke();
@@ -254,8 +252,8 @@ function pxFromImage(ix, iy) {
 
 /* ---------- controls ---------- */
 function wireControls() {
-  document.getElementById("zin").onclick = () => viewer.viewport.zoomBy(1.6).applyConstraints();
-  document.getElementById("zout").onclick = () => viewer.viewport.zoomBy(0.625).applyConstraints();
+  document.getElementById("zin").onclick = () => viewer.viewport.zoomBy(2).applyConstraints();
+  document.getElementById("zout").onclick = () => viewer.viewport.zoomBy(0.5).applyConstraints();
   document.getElementById("zhome").onclick = () => viewer.viewport.goHome();
   document.getElementById("p-prev").onclick = () => step(-1);
   document.getElementById("p-next").onclick = () => step(1);
@@ -263,20 +261,4 @@ function wireControls() {
     document.getElementById("panel").classList.remove("open");
     selected = -2; draw();
   };
-
-  const catToggle = document.getElementById("t-cats");
-  catToggle.onclick = () => {
-    showCats = !showCats;
-    catToggle.setAttribute("aria-pressed", String(showCats));
-    document.getElementById("chiprow").hidden = !showCats;
-    draw();
-  };
-  document.querySelectorAll(".chip.filter").forEach(ch => {
-    ch.onclick = () => {
-      const c = +ch.dataset.cat;
-      catOn[c] = !catOn[c];
-      ch.setAttribute("aria-pressed", String(catOn[c]));
-      draw();
-    };
-  });
 }
