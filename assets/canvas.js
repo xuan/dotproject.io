@@ -169,9 +169,10 @@ function renderPanel(id) {
     noteEl.hidden = false;
     nav.hidden = true;
   } else {
-    catEl.hidden = false;                  // show the dot's grid position (no category)
+    catEl.hidden = false;                  // position in the reading order (no category)
     catEl.className = "cv-pos";
-    catEl.textContent = "Row " + D.row[id] + " · Col " + D.col[id];
+    catEl.textContent = "Dot " + (orderPos[id] + 1).toLocaleString() +
+      " of " + D.n.toLocaleString();
     noteEl.hidden = true;
     textEl.innerHTML = TEXTS ? renderText(TEXTS[id]) : "Loading…";
     nav.hidden = false;
