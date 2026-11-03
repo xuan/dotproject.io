@@ -54,6 +54,14 @@ main {
   color: #d6283b;
 }
 
+.wordmark .o-red {
+  color: #d6283b;
+}
+
+.wordmark .o-blue {
+  color: #1f50d0;
+}
+
 .tagline {
   margin: 1.25rem 0 0;
   font-size: clamp(1rem, 2.6vw, 1.2rem);
