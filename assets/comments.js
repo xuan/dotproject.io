@@ -82,7 +82,7 @@ if (initialQ) qEl.value = initialQ;
 
 // Which comments have a painted dot on the canvas (for "find this dot" links).
 // Small file; loads well before the big comments.json below.
-fetch("assets/canvas1/dots.json")
+fetch("images/canvas1/dots.json")
   .then((r) => (r.ok ? r.json() : null))
   .then((d) => {
     if (!d || !d.ci) return;

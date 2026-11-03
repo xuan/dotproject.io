@@ -30,11 +30,18 @@ Tracked files:
 _config.yml            site config (title, url, baseurl="", exclude list)
 _layouts/default.html  shared page shell: <head>, global stylesheet, per-page styles:/scripts:
 index.html             landing page — wordmark + search form + responsive canvas image
-images/canvas1/        canvas1-{480,720,960,1440}.jpg web derivatives (tracked); masters ignored
+images/canvas1/        everything for canvas 1 (masters ignored, see below):
+                         canvas1-{480,720,960,1440}.jpg  landing-page derivatives
+                         canvas1.dzi + canvas1_files/    deep-zoom tiles for canvas.html
+                         dots.json                       dot positions, reading rank, comment index
+                         texts.json                      comment text per dot
+canvas.html            deep-zoom canvas viewer — tap a dot to read its comment (?dot=N deep-link)
 comments.html          results page — client-side search UI (front matter + body)
 404.html               not-found page (permalink: /404.html)
+assets/canvas.css      styles for the canvas viewer
+assets/canvas.js       OpenSeadragon viewer + dot hit-testing over images/canvas1/
 assets/comments.css    styles for the results page
-assets/comments.js     client-side search over comments.json
+assets/comments.js     client-side search over comments.json (+ "find this dot" links)
 style.css              global styles (landing page + shared tokens in :root)
 comments.json          search data — ~11.6 MB, ~49,865 records (tracked, served as-is)
 Gemfile                github-pages gem + webrick
@@ -118,6 +125,11 @@ responsive `<img srcset>` with `loading="lazy"`. Regenerate them from the master
 (`--resampleWidth <w>`) piped through `cjpeg -quality 72 -progressive -optimize`. **Adding a new
 size means three edits:** generate the file, add a `!images/canvas1/canvas1-<w>.jpg` line to
 `.gitignore`, and add it to the `srcset` in `index.html`.
+
+Also published from the same folder (each re-included by name in `.gitignore`): the deep-zoom tiles
+`canvas1.dzi` + `canvas1_files/` (417 tiles, ~8 MB, generated from `canvas1.jpg` — the owner
+approved publishing the master as tiles for the zoom viewer) and the viewer data `dots.json` /
+`texts.json`. Any new file you want served from `images/canvas1/` needs its own `!` line.
 
 Also keep `_site/`, `.jekyll-cache/`, `Gemfile.lock`, and `vendor/` out of commits (already in
 `.gitignore`).

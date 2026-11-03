@@ -19,11 +19,16 @@ vendor/
 serve.log
 
 # Large image working files — the raw macro-photo set + full-res masters stay out of
-# the repo. Only the small web derivatives (canvas1-<width>.jpg) are tracked & published.
-# (Negation needs the parent dir itself un-ignored, so ignore its *contents*, not the dir.)
+# the repo. Only the web derivatives below (resized JPEGs, deep-zoom tiles, dot data) are
+# tracked & published. (Negation needs the parent dir itself un-ignored, so ignore its
+# *contents*, not the dir.)
 images/canvas1/*
 !images/canvas1/canvas1-480.jpg
 !images/canvas1/canvas1-720.jpg
 !images/canvas1/canvas1-960.jpg
 !images/canvas1/canvas1-1440.jpg
+!images/canvas1/canvas1.dzi
+!images/canvas1/canvas1_files/
+!images/canvas1/dots.json
+!images/canvas1/texts.json
 canvas1_stitch/

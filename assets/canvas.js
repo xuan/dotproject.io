@@ -4,7 +4,7 @@
    survivor comment mapped to it. Arriving with ?dot=N selects and flies to dot N
    (used by the search page's "show on the canvas" links). Esc resets the view. */
 
-const BASE = "assets/canvas1/";
+const BASE = "images/canvas1/";
 const SELECT_RADIUS = 30;          // image px: how near a click must be to grab a dot
 const LINK_ZOOM = 3.5;             // zoom level used when flying to a linked/selected dot
 const OPEN_ZOOM = 2;               // fresh-open zoom (x the fit-to-view home zoom)
