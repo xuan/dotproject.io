@@ -13,6 +13,17 @@ let query = "";
 let dotOf = null;     // comment index -> dot index on its canvas (-1 if it has no dot)
 let canvasOf = null;  // comment index -> canvas number (1, 2, ...)
 const CANVASES = [1, 2];
+// Same Google Form as CHANGE_FORM in canvas.js (keep in sync); hidden while url is "".
+const CHANGE_FORM = {
+  url: "https://docs.google.com/forms/d/e/1FAIpQLSd-dLZonVQzHA44ixR2Yg-7XvNwHKt8mBlhTzfrZzzIpOtpcQ/viewform",
+  canvas: "entry.647534290", dot: "entry.178890866", ci: "entry.545841760",
+};
+function changeFormHref(c, dot, ci) {
+  if (!CHANGE_FORM.url) return "";
+  const q = new URLSearchParams({ usp: "pp_url" });
+  q.set(CHANGE_FORM.canvas, c); q.set(CHANGE_FORM.dot, dot); q.set(CHANGE_FORM.ci, ci);
+  return CHANGE_FORM.url + "?" + q.toString();
+}
 
 const esc = (s) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -63,6 +74,14 @@ function renderMore() {
       a.href = "canvas.html?c=" + canvasOf[ci] + "&dot=" + dotOf[ci];
       a.textContent = "Find this dot on canvas " + canvasOf[ci] + " →";
       li.appendChild(a);
+      const href = changeFormHref(canvasOf[ci], dotOf[ci], ci);
+      if (href) {
+        const r = document.createElement("a");
+        r.className = "loc req";
+        r.href = href; r.target = "_blank"; r.rel = "noopener";
+        r.textContent = "Your comment? Request a change";
+        li.appendChild(r);
+      }
     }
     frag.appendChild(li);
   }

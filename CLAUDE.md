@@ -189,6 +189,21 @@ Two pages, one dataset, deliberately split so the heavy JSON never loads on the 
 - `comments.js` styles redaction tokens (`[name]`, `[handle]`, `[email]`, `[link]`, `[phone]`)
   and highlights the query. The source comments are already anonymized.
 
+## Change requests (fix my comment / wrong colour)
+
+Under the Previous/Next buttons, the viewer's dot panel has a quiet link: "Is this your comment? Fix the
+wording or report the wrong colour". Each search result with a dot also has a "Request a change" link.
+Both open the owner's **Google Form** in a new tab. The form is prefilled with the canvas number, the dot
+index (the `?dot=` value) and the comment index (`ci` in `comments.json`). Responses go to a linked
+Google Sheet, and Forms emails the owner when one arrives. The site stores nothing. The form URL and
+its `entry.NNN` ids are in `CHANGE_FORM`, which appears in both `assets/canvas.js` and
+`assets/comments.js`; keep the two in sync. While `url` is `""` both links stay hidden.
+
+Acting on a request (the owner reviews every one; the Instagram handle is optional and only used to
+check authorship): edit the comment, or its age/incest label, in `ig-comments/data/classified/markdown`.
+Then run `build_site.py --check`, then the real build, as in "Which comment each dot shows". The colour
+rules there decide whether the comment moves to another dot.
+
 ## Do not commit / publish
 
 The raw sources are git-ignored and must **never** be committed or published anywhere:
