@@ -31,4 +31,13 @@ images/canvas1/*
 !images/canvas1/canvas1_files/
 !images/canvas1/dots.json
 !images/canvas1/texts.json
+images/canvas2/*
+!images/canvas2/canvas2-480.jpg
+!images/canvas2/canvas2-720.jpg
+!images/canvas2/canvas2-960.jpg
+!images/canvas2/canvas2-1440.jpg
+!images/canvas2/canvas2.dzi
+!images/canvas2/canvas2_files/
+!images/canvas2/dots.json
+!images/canvas2/texts.json
 canvas1_stitch/

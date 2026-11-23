@@ -1,10 +1,15 @@
 "use strict";
 /* Dot Project — canvas viewer.
-   Deep-zoom the painted canvas (OpenSeadragon tiles) and open any dot to read the
-   survivor comment mapped to it. Arriving with ?dot=N selects and flies to dot N
-   (used by the search page's "show on the canvas" links). Esc resets the view. */
+   Deep-zoom a painted canvas (OpenSeadragon tiles) and open any dot to read the
+   survivor comment mapped to it. ?c=N picks the canvas (1 when absent); ?dot=N selects
+   and flies to dot N (used by the search page's "find this dot" links). Esc resets the view. */
 
-const BASE = "images/canvas1/";
+const CANVAS_COUNT = 2;
+const CANVAS = (() => {
+  const c = parseInt(new URLSearchParams(location.search).get("c"), 10);
+  return c >= 1 && c <= CANVAS_COUNT ? c : 1;
+})();
+const BASE = "images/canvas" + CANVAS + "/";
 const SELECT_RADIUS = 30;          // image px: how near a click must be to grab a dot
 const LINK_ZOOM = 3.5;             // zoom level used when flying to a linked/selected dot
 const OPEN_ZOOM = 2;               // fresh-open zoom (x the fit-to-view home zoom)
@@ -20,9 +25,10 @@ let pendingDot = null;             // deep-link (?dot=N) target, resolved once r
 window.addEventListener("load", init);
 
 function init() {
+  if (CANVAS !== 1) document.title = "Canvas " + CANVAS + " \u2014 Dot Project";
   viewer = OpenSeadragon({
     element: document.getElementById("osd"),
-    tileSources: BASE + "canvas1.dzi",
+    tileSources: BASE + "canvas" + CANVAS + ".dzi",
     prefixUrl: "",                 // we supply our own controls
     showNavigationControl: false,
     showNavigator: false,
@@ -219,7 +225,7 @@ function renderPanel(id) {
   } else {
     catEl.hidden = false;                  // position in the reading order (no category)
     catEl.className = "cv-pos";
-    catEl.textContent = "Dot " + (orderPos[id] + 1).toLocaleString() +
+    catEl.textContent = "Canvas " + CANVAS + " \u00b7 Dot " + (orderPos[id] + 1).toLocaleString() +
       " of " + D.n.toLocaleString();
     noteEl.hidden = true;
     textEl.innerHTML = TEXTS ? renderText(TEXTS[id]) : "Loading…";

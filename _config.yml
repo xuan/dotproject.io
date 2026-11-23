@@ -17,3 +17,5 @@ exclude:
   # Full-res masters live beside the web derivatives; keep only the masters out of the build.
   - images/canvas1/canvas1.jpg
   - images/canvas1/canvas1_4x.jpg
+  - images/canvas2/canvas2.jpg
+  - images/canvas2/canvas2_4x.jpg

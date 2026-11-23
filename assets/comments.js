@@ -10,7 +10,9 @@ let DATA = [];        // [{comment, lc}]
 let matches = [];     // current filtered indices
 let shown = 0;
 let query = "";
-let dotOf = null;     // comment index -> dot index on canvas1 (-1 if not on the canvas)
+let dotOf = null;     // comment index -> dot index on its canvas (-1 if it has no dot)
+let canvasOf = null;  // comment index -> canvas number (1, 2, ...)
+const CANVASES = [1, 2];
 
 const esc = (s) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -58,8 +60,8 @@ function renderMore() {
     if (dotOf && ci < dotOf.length && dotOf[ci] >= 0) {
       const a = document.createElement("a");
       a.className = "loc";
-      a.href = "canvas.html?dot=" + dotOf[ci];
-      a.textContent = "Find this dot on the canvas →";
+      a.href = "canvas.html?c=" + canvasOf[ci] + "&dot=" + dotOf[ci];
+      a.textContent = "Find this dot on canvas " + canvasOf[ci] + " →";
       li.appendChild(a);
     }
     frag.appendChild(li);
@@ -80,19 +82,24 @@ moreBtn.addEventListener("click", renderMore);
 const initialQ = new URLSearchParams(location.search).get("q");
 if (initialQ) qEl.value = initialQ;
 
-// Which comments have a painted dot on the canvas (for "find this dot" links).
-// Small file; loads well before the big comments.json below.
-fetch("images/canvas1/dots.json")
-  .then((r) => (r.ok ? r.json() : null))
-  .then((d) => {
-    if (!d || !d.ci) return;
-    let max = 0;
-    for (const c of d.ci) if (c > max) max = c;
+// Which comments have a painted dot, and on which canvas (for "find this dot" links).
+// Small files; they load well before the big comments.json below.
+Promise.all(CANVASES.map((c) =>
+  fetch("images/canvas" + c + "/dots.json")
+    .then((r) => (r.ok ? r.json() : null))
+    .catch(() => null)))
+  .then((list) => {
+    let max = -1;
+    for (const d of list) if (d && d.ci) for (const c of d.ci) if (c > max) max = c;
+    if (max < 0) return;
     dotOf = new Int32Array(max + 1).fill(-1);
-    for (let i = 0; i < d.ci.length; i++) dotOf[d.ci[i]] = i;
+    canvasOf = new Uint8Array(max + 1);
+    list.forEach((d, n) => {
+      if (!d || !d.ci) return;
+      for (let i = 0; i < d.ci.length; i++) { dotOf[d.ci[i]] = i; canvasOf[d.ci[i]] = CANVASES[n]; }
+    });
     if (DATA.length) recompute();   // re-render with links if results already shown
-  })
-  .catch(() => {});
+  });
 
 fetch("comments.json")
   .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
