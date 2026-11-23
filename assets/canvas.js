@@ -6,6 +6,19 @@
    The side arrows (shown on hover, like the landing page) switch canvases in place. */
 
 const CANVAS_COUNT = 2;
+/* "Request a change" link in the dot panel → owner's Google Form, prefilled with
+   canvas, dot index (?dot= value) and comment index (ci into comments.json).
+   Keep in sync with CHANGE_FORM in comments.js. The link stays hidden while url is "". */
+const CHANGE_FORM = {
+  url: "https://docs.google.com/forms/d/e/1FAIpQLSd-dLZonVQzHA44ixR2Yg-7XvNwHKt8mBlhTzfrZzzIpOtpcQ/viewform",
+  canvas: "entry.647534290", dot: "entry.178890866", ci: "entry.545841760",
+};
+function changeFormHref(c, dot, ci) {
+  if (!CHANGE_FORM.url) return "";
+  const q = new URLSearchParams({ usp: "pp_url" });
+  q.set(CHANGE_FORM.canvas, c); q.set(CHANGE_FORM.dot, dot); q.set(CHANGE_FORM.ci, ci);
+  return CHANGE_FORM.url + "?" + q.toString();
+}
 let canvas = (() => {
   const c = parseInt(new URLSearchParams(location.search).get("c"), 10);
   return c >= 1 && c <= CANVAS_COUNT ? c : 1;
@@ -261,6 +274,7 @@ function renderPanel(id) {
   const textEl = document.getElementById("p-text");
   const noteEl = document.getElementById("p-note");
   const nav = document.getElementById("p-nav");
+  const report = document.getElementById("p-report");
 
   if (id === -1) {
     catEl.hidden = false;
@@ -272,6 +286,7 @@ function renderPanel(id) {
       "comment, and the canvas grows outward from here.";
     noteEl.hidden = false;
     nav.hidden = true;
+    report.hidden = true;
   } else {
     catEl.hidden = false;                  // position in the reading order (no category)
     catEl.className = "cv-pos";
@@ -280,6 +295,9 @@ function renderPanel(id) {
     noteEl.hidden = true;
     textEl.innerHTML = TEXTS ? renderText(TEXTS[id]) : "Loading…";
     nav.hidden = false;
+    const href = D.ci ? changeFormHref(canvas, id, D.ci[id]) : "";
+    report.hidden = !href;
+    if (href) report.href = href;
   }
   panel.classList.add("open");
 }
