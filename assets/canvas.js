@@ -2,14 +2,18 @@
 /* Dot Project — canvas viewer.
    Deep-zoom a painted canvas (OpenSeadragon tiles) and open any dot to read the
    survivor comment mapped to it. ?c=N picks the canvas (1 when absent); ?dot=N selects
-   and flies to dot N (used by the search page's "find this dot" links). Esc resets the view. */
+   and flies to dot N (used by the search page's "find this dot" links). Esc resets the view.
+   The side arrows (shown on hover, like the landing page) switch canvases in place. */
 
 const CANVAS_COUNT = 2;
-const CANVAS = (() => {
+let canvas = (() => {
   const c = parseInt(new URLSearchParams(location.search).get("c"), 10);
   return c >= 1 && c <= CANVAS_COUNT ? c : 1;
 })();
-const BASE = "images/canvas" + CANVAS + "/";
+let BASE = "images/canvas" + canvas + "/";
+let loadSeq = 0;                   // ignores data that arrives for a canvas we already left
+let slideIn = 0;                   // direction of the switch animation still to finish (+1 / -1)
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const SELECT_RADIUS = 30;          // image px: how near a click must be to grab a dot
 const LINK_ZOOM = 3.5;             // zoom level used when flying to a linked/selected dot
 const OPEN_ZOOM = 2;               // fresh-open zoom (x the fit-to-view home zoom)
@@ -25,10 +29,10 @@ let pendingDot = null;             // deep-link (?dot=N) target, resolved once r
 window.addEventListener("load", init);
 
 function init() {
-  if (CANVAS !== 1) document.title = "Canvas " + CANVAS + " \u2014 Dot Project";
+  if (canvas !== 1) document.title = "Canvas " + canvas + " \u2014 Dot Project";
   viewer = OpenSeadragon({
     element: document.getElementById("osd"),
-    tileSources: BASE + "canvas" + CANVAS + ".dzi",
+    tileSources: BASE + "canvas" + canvas + ".dzi",
     prefixUrl: "",                 // we supply our own controls
     showNavigationControl: false,
     showNavigator: false,
@@ -59,6 +63,7 @@ function init() {
       viewer.viewport.zoomTo(viewer.viewport.getHomeZoom() * OPEN_ZOOM, null, true);
       viewer.viewport.applyConstraints(true);
     }
+    if (slideIn) finishSlide();
   });
   viewer.addHandler("animation", draw);
   viewer.addHandler("update-viewport", draw);
@@ -74,19 +79,64 @@ function init() {
   const dp = new URLSearchParams(location.search).get("dot");
   if (dp !== null && dp !== "") pendingDot = parseInt(dp, 10);
 
+  updateSwitcher();
+
   // minimal hook for console debugging / deep-links
-  window.__cv = { viewer, select, goToDot, data: () => D };
+  window.__cv = { viewer, select, goToDot, switchCanvas, data: () => D, canvas: () => canvas };
+}
+
+/* ---------- switching canvases (side arrows) ---------- */
+function switchCanvas(c) {
+  if (c === canvas || c < 1 || c > CANVAS_COUNT) return;
+  const dir = c > canvas ? 1 : -1;
+  canvas = c;
+  BASE = "images/canvas" + c + "/";
+  document.getElementById("panel").classList.remove("open");
+  selected = -2; pendingDot = null;
+  D = null; TEXTS = null; buckets = null; tiledImage = null;
+  draw();
+  history.replaceState(null, "", "?c=" + c);
+  document.title = c === 1 ? "The canvas \u2014 Dot Project" : "Canvas " + c + " \u2014 Dot Project";
+  updateSwitcher();
+  const osd = document.getElementById("osd");
+  osd.classList.add(dir > 0 ? "go-left" : "go-right");       // slide the old canvas out
+  setTimeout(() => {
+    slideIn = dir;
+    document.getElementById("loading").classList.remove("hide");
+    viewer.open(BASE + "canvas" + c + ".dzi");
+    loadData();
+  }, reduceMotion ? 0 : 260);
+}
+
+function finishSlide() {                                       // slide the new canvas in
+  const osd = document.getElementById("osd");
+  osd.classList.remove("go-left", "go-right");
+  osd.classList.add(slideIn > 0 ? "from-right" : "from-left");
+  slideIn = 0;
+  void osd.offsetWidth;                                        // commit the start position
+  osd.classList.remove("from-right", "from-left");
+}
+
+function updateSwitcher() {
+  document.getElementById("cprev").disabled = canvas <= 1;
+  document.getElementById("cnext").disabled = canvas >= CANVAS_COUNT;
+  document.getElementById("cprev").title = canvas > 1 ? "Canvas " + (canvas - 1) : "";
+  document.getElementById("cnext").title = canvas < CANVAS_COUNT ? "Canvas " + (canvas + 1) : "";
+  document.getElementById("cwhich").textContent = "Canvas " + canvas + " of " + CANVAS_COUNT;
 }
 
 /* ---------- data ---------- */
 function loadData() {
+  const seq = ++loadSeq;
   fetch(BASE + "dots.json").then(r => r.json()).then(d => {
+    if (seq !== loadSeq) return;
     D = d;
     buildIndex();
     draw();
     tryPending();
   }).catch(() => {});
   fetch(BASE + "texts.json").then(r => r.json()).then(t => {
+    if (seq !== loadSeq) return;
     TEXTS = t;
     if (selected >= 0) renderPanel(selected);   // fill in if a dot was opened early
   }).catch(() => {});
@@ -225,7 +275,7 @@ function renderPanel(id) {
   } else {
     catEl.hidden = false;                  // position in the reading order (no category)
     catEl.className = "cv-pos";
-    catEl.textContent = "Canvas " + CANVAS + " \u00b7 Dot " + (orderPos[id] + 1).toLocaleString() +
+    catEl.textContent = "Canvas " + canvas + " \u00b7 Dot " + (orderPos[id] + 1).toLocaleString() +
       " of " + D.n.toLocaleString();
     noteEl.hidden = true;
     textEl.innerHTML = TEXTS ? renderText(TEXTS[id]) : "Loading…";
@@ -310,6 +360,8 @@ function wireControls() {
   document.getElementById("zin").onclick = () => viewer.viewport.zoomBy(2).applyConstraints();
   document.getElementById("zout").onclick = () => viewer.viewport.zoomBy(0.5).applyConstraints();
   document.getElementById("zhome").onclick = () => viewer.viewport.goHome();
+  document.getElementById("cprev").onclick = () => switchCanvas(canvas - 1);
+  document.getElementById("cnext").onclick = () => switchCanvas(canvas + 1);
   document.getElementById("p-prev").onclick = () => step(-1);
   document.getElementById("p-next").onclick = () => step(1);
   document.getElementById("p-close").onclick = () => {

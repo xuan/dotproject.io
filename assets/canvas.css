@@ -48,6 +48,30 @@ body {
 }
 .cv-tools button:hover { border-color: var(--fg); }
 
+/* switch canvases: the landing page's .car-arrow buttons (style.css), at the stage's sides,
+   shown on hover (always on touch screens) and hidden at either end; the old canvas slides
+   out and the new one in */
+.cv-stage-wrap .car-arrow { top: calc(50% - 22px); z-index: 7; }
+.cv-stage-wrap .cv-prev { left: 14px; }
+.cv-stage-wrap .cv-next { right: 14px; transition: opacity 0.2s ease, border-color 0.2s ease, right 0.26s ease; }
+.cv-stage-wrap:hover .car-arrow,
+.cv-stage-wrap:hover .cv-which { opacity: 1; }
+/* keep "next" clear of the open comment panel */
+.cv:has(.cv-panel.open) .cv-stage-wrap .cv-next { right: calc(min(var(--panelw), 92vw) + 14px); }
+.cv-which {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 7;
+  padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.92);
+  border: 1px solid #e2e2e2; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  font-size: 0.78rem; letter-spacing: 0.03em; color: var(--muted); font-variant-numeric: tabular-nums;
+  pointer-events: none; opacity: 0; transition: opacity 0.2s ease;
+}
+#osd { transition: transform 0.26s ease, opacity 0.26s ease; }
+#osd.go-left { transform: translateX(-6%); opacity: 0; }
+#osd.go-right { transform: translateX(6%); opacity: 0; }
+#osd.from-right { transform: translateX(6%); opacity: 0; transition: none; }
+#osd.from-left { transform: translateX(-6%); opacity: 0; transition: none; }
+@media (hover: none) { .cv-which { opacity: 1; } }
+
 /* comment panel */
 .cv-panel {
   position: absolute; top: 0; right: 0; bottom: 0; width: var(--panelw); max-width: 92vw;
@@ -103,7 +127,10 @@ body {
   }
   .cv-panel.open { transform: translateY(0); }
   .cv-tools { bottom: 10px; left: 10px; }
+  /* the panel is a bottom sheet here: keep both arrows at the sides, above the sheet */
+  .cv:has(.cv-panel.open) .cv-stage-wrap .cv-next { right: 14px; }
+  .cv:has(.cv-panel.open) .cv-stage-wrap .car-arrow { top: calc(19vh - 22px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cv-panel { transition: none; }
+  .cv-panel, #osd, .cv-which { transition: none; }
 }
