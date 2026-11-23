@@ -29,21 +29,25 @@ Tracked files:
 ```text
 _config.yml            site config (title, url, baseurl="", exclude list)
 _layouts/default.html  shared page shell: <head>, global stylesheet, per-page styles:/scripts:
-index.html             landing page — wordmark + search form + responsive canvas image
+index.html             landing page — wordmark + search form + canvas carousel (one slide per canvas)
 images/canvas1/        everything for canvas 1 (masters ignored, see below):
                          canvas1-{480,720,960,1440}.jpg  landing-page derivatives
                          canvas1.dzi + canvas1_files/    deep-zoom tiles for canvas.html
-                         dots.json                       dot positions, reading rank, comment index
+                         dots.json                       dot positions, paint, reading rank, comment index
                          texts.json                      comment text per dot
-canvas.html            deep-zoom canvas viewer — tap a dot to read its comment (?dot=N deep-link)
+images/canvas2/        the same set for canvas 2 (canvas2-*.jpg, canvas2.dzi + canvas2_files/,
+                         dots.json, texts.json)
+canvas.html            deep-zoom canvas viewer — tap a dot to read its comment
+                         (?c=N picks the canvas, default 1; ?dot=N deep-links to a dot)
 comments.html          results page — client-side search UI (front matter + body)
 404.html               not-found page (permalink: /404.html)
 assets/canvas.css      styles for the canvas viewer
-assets/canvas.js       OpenSeadragon viewer + dot hit-testing over images/canvas1/
+assets/canvas.js       OpenSeadragon viewer + dot hit-testing over images/canvas<N>/
 assets/comments.css    styles for the results page
-assets/comments.js     client-side search over comments.json (+ "find this dot" links)
-style.css              global styles (landing page + shared tokens in :root)
-comments.json          search data — ~11.6 MB, ~49,865 records (tracked, served as-is)
+assets/comments.js     client-side search over comments.json (+ "find this dot on canvas N" links)
+assets/home.js         landing-page carousel arrows (the only script on the landing page)
+style.css              global styles (landing page + carousel + shared tokens in :root)
+comments.json          search data — ~10 MB, 49,148 reviewed records (tracked, served as-is)
 Gemfile                github-pages gem + webrick
 .ruby-version          3.3.13 (matches the Ruby GitHub Pages runs)
 CNAME                  dotproject.io
@@ -52,6 +56,51 @@ CNAME                  dotproject.io
 Each page carries YAML front matter (`layout: default`, `title`, `description`, optional
 `noindex`, `styles:`, `scripts:`) and contributes only its body; the layout supplies the
 `<head>` and shell.
+
+## Canvas dot counts
+
+Recounted on 2026-11-23 from `images/canvas1/canvas1_4x.jpg` and `images/canvas2/canvas2.jpg`
+(`ig-comments/tools/canvas/detect_dots.py` + `lattice.py`): colour segmentation, connected
+components, every dot placed on the hex lattice. Red = assaulted under 18; blue = 18+.
+
+| Canvas   | Red   | Blue  | Half red / half blue | Total dots |
+|----------|------:|------:|---------------------:|-----------:|
+| Canvas 1 | 8,660 | 2,733 | 3                    | **11,396** |
+| Canvas 2 | 8,762 | 2,599 | 1                    | **11,362** |
+
+- **Canvas 1** excludes the single black dot in the middle and the small gold crown painted above it.
+  The 2026-11-22 count (11,395) missed one brownish red-over-blue dot at row 85, column 6; it is now
+  dot index 11395 in `dots.json` (`n = 11396`). The only gaps in the lattice are the deliberate blank
+  ring around the black dot. At the bottom edge one oversized blob is two overlapping dots (kept as 2).
+- **Canvas 2** is a full 92-column lattice, 247 rows × 46 dots, no gaps; one blob of two touching red
+  dots counts as 2.
+- A dot is **half red / half blue** when at least 30% of it is the second colour. Many blue dots carry
+  a small red crescent (and a few red dots a blue one); those are brush slips, not a code — they
+  don't follow the incest label — and count by their main colour.
+
+## Which comment each dot shows
+
+Both canvases were painted in comment order (`#k`, the classifier's numbering 1–49,865), row by row
+top to bottom, every row left to right, red/blue by the classifier's original age label. Canvas 1
+holds #1–#11,416, canvas 2 #11,417–#22,777. The painted mapping was recovered by aligning painted
+colours with the comment stream (canvas 1 on 2026-11-03, canvas 2 on 2026-11-23, 99.9% colour
+agreement).
+
+After the hand review of all comments (2026-11-23) the site data is rebuilt from
+`ig-comments/data/classified/markdown` by `ig-comments/tools/canvas/build_site.py`
+(see `ig-comments/tools/canvas/README.md`). Owner rules:
+
+- a dot's colour must match its comment: **red = UNDERAGE or any INCEST**, blue = ADULT without
+  INCEST; a half red / half blue dot takes either;
+- every dot keeps the comment painted there unless the review removed it or its colour no longer fits;
+  mismatches first swap with the nearest opposite mismatch, then take displaced comments, then
+  never-painted comments in painting order right after canvas 2 (#22,778 on);
+- a comment is on at most one dot; comments without a dot stay searchable.
+
+`dots.json` = `{w, h, origin (canvas 1 only), n, x, y, cat (0 under 18, 1 adult, 2 incest),
+paint (0 red, 1 blue, 2 half), read (rank in painting order), ci (index into comments.json)}`.
+**Don't regenerate `comments.json` with `ig-comments/tools/export_site_comments.py`** — that is the
+old unreviewed export; it renumbers every comment and breaks every dot's `ci`.
 
 ## Build & run locally
 
@@ -92,8 +141,12 @@ watch the repo's **Actions** tab, or `gh api repos/<owner>/dotproject.io/pages/b
 Two pages, one dataset, deliberately split so the heavy JSON never loads on the landing page:
 
 - **index.html** has a plain `<form method="get" action="/comments.html">` with an input
-  `name="q"`. Submitting navigates to `comments.html?q=<text>` — **no JavaScript on the landing
-  page**, and the ~11.6 MB `comments.json` is *not* fetched there.
+  `name="q"`. Submitting navigates to `comments.html?q=<text>`. The only script on the landing page
+  is the small carousel helper `assets/home.js`; the ~10 MB `comments.json` is *not* fetched there.
+- The landing carousel is a CSS scroll-snap strip (swipe / trackpad / ←→ keys); the side arrows
+  appear on hover (always shown on touch screens, which can't hover) and hide at either end. Each
+  slide links to `canvas.html?c=N`. Adding a canvas = a new slide in `index.html`, its number in
+  `CANVAS_COUNT` (`assets/canvas.js`) and `CANVASES` (`assets/comments.js`).
 - **comments.html** (`assets/comments.js`) `fetch`es `comments.json`, reads `?q=` from the URL
   to seed the box, and does an in-memory substring search, paginating 200 results at a time.
 - `comments.json` records are `{comment, category:[...]}`. The UI currently shows **only the
@@ -108,6 +161,8 @@ The raw sources are git-ignored and must **never** be committed or published any
 
 - `images/canvas1/canvas1.jpg` — the full-resolution master photograph (~11 MB).
 - `images/canvas1/canvas1_4x.jpg` — the 4× upscaled master (~65 MB).
+- `images/canvas2/canvas2.jpg` / `canvas2_4x.jpg` — canvas 2's master photo and 4× upscale.
+- `images/canvas1/_pre_wb/` — backups of the canvas 1 masters from before the white-balance fix.
 - the raw close-up macro photo set (hundreds of large frames), wherever it lands under
   `images/canvas1/`.
 - `canvas1_stitch/` — stitching working files / handoff.
@@ -115,6 +170,7 @@ The raw sources are git-ignored and must **never** be committed or published any
 They are source material for a gigapixel image being assembled with external tools, not web
 assets. `.gitignore` ignores **everything** under `images/canvas1/` and then re-includes only the
 small web derivatives by name, so a new master/frame dropped in there stays private by default.
+`images/canvas2/` works the same way.
 `_config.yml` separately excludes the two named masters from the Jekyll build (the sources aren't in
 git, so a server build never sees them anyway — but don't re-add a bare `images/canvas1` exclude: it
 greedily drops the whole `images/` tree, derivatives included).
@@ -130,6 +186,8 @@ Also published from the same folder (each re-included by name in `.gitignore`): 
 `canvas1.dzi` + `canvas1_files/` (417 tiles, ~8 MB, generated from `canvas1.jpg` — the owner
 approved publishing the master as tiles for the zoom viewer) and the viewer data `dots.json` /
 `texts.json`. Any new file you want served from `images/canvas1/` needs its own `!` line.
+Canvas 2 publishes the same set from `canvas2.jpg` (tiles via `ig-comments/tools/canvas/make_tiles.py`:
+256 px, overlap 1, quality 75, no EXIF/XMP/ICC metadata).
 
 Also keep `_site/`, `.jekyll-cache/`, `Gemfile.lock`, and `vendor/` out of commits (already in
 `.gitignore`).

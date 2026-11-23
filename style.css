@@ -170,9 +170,101 @@ main {
   color: var(--fg);
 }
 
+/* Canvas carousel: one canvas per view, scroll sideways; the arrows appear on hover. */
+.carousel {
+  --pad: 40px;                /* room for the image's (hover) shadow, which the scroller clips */
+  position: relative;
+  margin: -26px calc(-1 * var(--pad)) 0;   /* padding below, pulled back so the image stays put */
+}
+
+@media (max-width: 520px) {
+  .carousel {
+    --pad: 32px;              /* = the body padding, so it never pokes past the screen edge */
+  }
+}
+
+.car-track {
+  display: flex;
+  gap: calc(2 * var(--pad));  /* so the next canvas never peeks in */
+  padding: 26px var(--pad) 30px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+  outline: none;
+}
+
+.car-track::-webkit-scrollbar {
+  display: none;
+}
+
+.car-track:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: -2px;
+  border-radius: 14px;
+}
+
+.car-slide {
+  flex: 0 0 100%;
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+}
+
+.car-arrow {
+  position: absolute;
+  top: calc(50% - 40px);      /* centred on the image, above the caption */
+  z-index: 2;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0 4px;
+  font: inherit;
+  font-size: 2rem;
+  line-height: 1;
+  color: var(--fg);
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid #d9d9d9;
+  border-radius: 50%;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease, border-color 0.2s ease;
+}
+
+.car-prev {
+  left: calc(var(--pad) + 12px);
+}
+
+.car-next {
+  right: calc(var(--pad) + 12px);
+}
+
+.carousel:hover .car-arrow,
+.car-arrow:focus-visible {
+  opacity: 1;
+}
+
+.car-arrow:hover {
+  border-color: var(--fg);
+}
+
+.car-arrow:disabled {
+  visibility: hidden;         /* no "previous" on the first canvas, no "next" on the last */
+}
+
+@media (hover: none) {
+  .car-arrow {
+    opacity: 1;               /* touch screens can't hover, so keep the arrows visible */
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .reveal img,
-  .canvas-cta {
+  .canvas-cta,
+  .car-arrow {
     transition: none;
   }
 
