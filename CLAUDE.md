@@ -38,7 +38,8 @@ images/canvas1/        everything for canvas 1 (masters ignored, see below):
 images/canvas2/        the same set for canvas 2 (canvas2-*.jpg, canvas2.dzi + canvas2_files/,
                          dots.json, texts.json)
 canvas.html            deep-zoom canvas viewer — tap a dot to read its comment
-                         (?c=N picks the canvas, default 1; ?dot=N deep-links to a dot)
+                         (?c=N picks the canvas, default 1; ?dot=N deep-links to a dot);
+                         side arrows switch canvases in place, like the landing carousel
 comments.html          results page — client-side search UI (front matter + body)
 404.html               not-found page (permalink: /404.html)
 assets/canvas.css      styles for the canvas viewer
@@ -102,6 +103,34 @@ paint (0 red, 1 blue, 2 half), read (rank in painting order), ci (index into com
 **Don't regenerate `comments.json` with `ig-comments/tools/export_site_comments.py`** — that is the
 old unreviewed export; it renumbers every comment and breaks every dot's `ci`.
 
+## Adding a canvas (canvas 3, …)
+
+Scripts are in `ig-comments/tools/canvas/` (README there); they need a Python with numpy, scipy,
+Pillow and opencv-python(-headless), plus macOS `sips` and `cjpeg`. N = the new canvas number.
+
+1. **Masters stay private.** Put the photo at `images/canvasN/canvasN.jpg`. In `.gitignore` add
+   `images/canvasN/*` plus `!` lines for `canvasN-{480,720,960,1440}.jpg`, `canvasN.dzi`,
+   `canvasN_files/`, `dots.json` and `texts.json`. In `_config.yml`, exclude the master (and any `_4x`).
+2. **Images — the owner's settings (2026-11-23):** pure white paper on every canvas, and dots as
+   vivid as canvas 2's.
+   `web_images.py images/canvasN/canvasN.jpg images/canvasN canvasN --chroma K --gamma G --white`.
+   Start from canvas 2's `--chroma 1.9 --gamma 0.72` for an untouched photo; skip the boost if the
+   master is already boosted (canvas 1 is). Target dot colours, measured in LAB on the master: canvas 2
+   red L≈52 / chroma≈102 and blue L≈45 / chroma≈97 (canvas 1: red 46/87, blue 35/101). Check close-ups
+   before publishing; going much past ×1.9 makes the reds go flat and the blues wash out.
+3. **Dots → comments.** Run `detect_dots.py` (draft divisor 1 for a normal photo) and `lattice.py`.
+   Then run `align.py`, starting the comment stream right after canvas 2's last painted comment
+   (#22,777). Pass `--skip` with the 865 never-painted comments the rematch already placed on
+   canvases 1–2 (#22,778–#27,349; listed in `ig-comments/data/canvas/rematch.json` →
+   `never_painted_used`), if the painter skipped them as asked. Then extend `painted.py` and
+   `CANVASES` in `build_site.py` to canvas N, and run `build_site.py --check`, then for real.
+4. **Site code.** Add a slide to the carousel in `index.html`, and raise `CANVAS_COUNT` in
+   `assets/canvas.js` and `CANVASES` in `assets/comments.js`. The viewer arrows and the "Canvas N of M"
+   label follow automatically.
+5. **Check:** `bundle exec jekyll build`; then in a browser check the carousel, the viewer's
+   switching, a `?c=N&dot=…` link and the search page's "Find this dot on canvas N" links. Add the new
+   canvas to the dot-count table above.
+
 ## Build & run locally
 
 Needs **Ruby ≥ 3.0** (system Ruby 2.6 is too old). With rbenv, `cd`-ing in selects 3.3.13 from
@@ -147,6 +176,11 @@ Two pages, one dataset, deliberately split so the heavy JSON never loads on the 
   appear on hover (always shown on touch screens, which can't hover) and hide at either end. Each
   slide links to `canvas.html?c=N`. Adding a canvas = a new slide in `index.html`, its number in
   `CANVAS_COUNT` (`assets/canvas.js`) and `CANVASES` (`assets/comments.js`).
+- The viewer (`canvas.html`) reuses the carousel's `.car-arrow` buttons at the stage's sides (shown on
+  hover, always on touch, hidden at the ends, kept clear of the open comment panel) plus a
+  "Canvas N of M" label. Switching happens in place: the old canvas slides out, `viewer.open()` loads
+  the other DZI and its dots/texts (stale fetches are ignored), and the URL becomes `?c=N`
+  (`history.replaceState`, so Back still leaves the viewer).
 - **comments.html** (`assets/comments.js`) `fetch`es `comments.json`, reads `?q=` from the URL
   to seed the box, and does an in-memory substring search, paginating 200 results at a time.
 - `comments.json` records are `{comment, category:[...]}`. The UI currently shows **only the
@@ -176,18 +210,34 @@ git, so a server build never sees them anyway — but don't re-add a bare `image
 greedily drops the whole `images/` tree, derivatives included).
 
 **What IS published** (tracked and served): the resized/compressed web derivatives
-`images/canvas1/canvas1-{480,720,960,1440}.jpg` (~0.14–1.0 MB each), shown on the landing page via a
-responsive `<img srcset>` with `loading="lazy"`. Regenerate them from the master with `sips`
-(`--resampleWidth <w>`) piped through `cjpeg -quality 72 -progressive -optimize`. **Adding a new
+`images/canvas1/canvas1-{480,720,960,1440}.jpg` (~0.2–1.0 MB each), shown on the landing page via a
+responsive `<img srcset>` with `loading="lazy"`. Regenerate them (and the tiles) with `web_images.py`
+(see below). **Adding a new
 size means three edits:** generate the file, add a `!images/canvas1/canvas1-<w>.jpg` line to
 `.gitignore`, and add it to the `srcset` in `index.html`.
 
 Also published from the same folder (each re-included by name in `.gitignore`): the deep-zoom tiles
-`canvas1.dzi` + `canvas1_files/` (417 tiles, ~8 MB, generated from `canvas1.jpg` — the owner
+`canvas1.dzi` + `canvas1_files/` (417 tiles, ~11 MB, generated from `canvas1.jpg` — the owner
 approved publishing the master as tiles for the zoom viewer) and the viewer data `dots.json` /
 `texts.json`. Any new file you want served from `images/canvas1/` needs its own `!` line.
-Canvas 2 publishes the same set from `canvas2.jpg` (tiles via `ig-comments/tools/canvas/make_tiles.py`:
-256 px, overlap 1, quality 75, no EXIF/XMP/ICC metadata).
+Both canvases' published images (landing sizes + tiles) are built in one step by
+`ig-comments/tools/canvas/web_images.py`, which never modifies the masters:
+
+```sh
+web_images.py images/canvas1/canvas1.jpg images/canvas1 canvas1 --white
+web_images.py images/canvas2/canvas2.jpg images/canvas2 canvas2 --chroma 1.9 --gamma 0.72 --white
+```
+
+- `--white` makes the paper pure white (owner, 2026-11-23): pixels with low colour and high lightness
+  are blended to #fff; the dots, the black dot and the gold crown are untouched and dot edges blend
+  without halos.
+- Canvas 2 is boosted first (LAB chroma ×1.9, lightness gamma 0.72; `vivid.py`). The untouched photo
+  looked dull next to canvas 1, whose master already carries chroma ×1.4 and a white balance, and the
+  owner asked twice for stronger and brighter. ×1.9 is about the ceiling: beyond it the reds hit the
+  sRGB limit and go flat while the blues wash out.
+- Tiles: 256 px, overlap 1, quality 75; landing sizes: `sips` → `cjpeg -quality 72 -progressive
+  -optimize -sample 1x1`. Both use full-resolution colour (4:4:4) so the white paper doesn't pick up a
+  pink/blue tint next to the dots; no EXIF/XMP/ICC metadata.
 
 Also keep `_site/`, `.jekyll-cache/`, `Gemfile.lock`, and `vendor/` out of commits (already in
 `.gitignore`).
