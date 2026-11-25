@@ -27,6 +27,22 @@ body {
 .cv-head .wordmark { font-size: 1.35rem; margin: 0; }
 .cv-head .wordmark a { color: inherit; text-decoration: none; }
 .cv-sub { margin: 0; font-size: 0.82rem; color: var(--muted); line-height: 1.3; }
+/* search: same target as the landing page's form (comments.html?q=) */
+.cv-search {
+  margin-left: auto; align-self: center; flex: 1 1 200px; max-width: 380px;
+  display: flex; gap: 8px;
+}
+.cv-search input {
+  flex: 1 1 auto; min-width: 0; font: inherit; font-size: 0.9rem; padding: 8px 12px;
+  border: 1px solid #d9d9d9; border-radius: 9px; background: #fff; color: var(--fg); outline: none;
+}
+.cv-search input::placeholder { color: var(--muted); }
+.cv-search input:focus { border-color: var(--fg); }
+.cv-search button {
+  flex: 0 0 auto; font: inherit; font-size: 0.85rem; padding: 8px 14px; cursor: pointer;
+  border: 1px solid var(--fg); border-radius: 9px; background: var(--fg); color: #fff;
+}
+.cv-search button:hover { opacity: 0.85; }
 
 /* stage */
 .cv-stage-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
@@ -126,6 +142,9 @@ body {
 
 @media (max-width: 640px) {
   .cv-sub { display: none; }
+  .cv-head { gap: 12px; padding: 10px 12px; }
+  .cv-search { flex-basis: 150px; }
+  .cv-search input { font-size: 1rem; }      /* 16px: stops iOS zooming in on focus */
   .cv-panel {
     width: 100%; max-width: 100%; top: auto; height: 62vh;
     border-left: none; border-top: 1px solid #ececec; border-radius: 16px 16px 0 0;

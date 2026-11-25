@@ -124,6 +124,66 @@ main {
   opacity: 0.85;
 }
 
+/* red / blue / total dot counts over all canvases (from _data/canvases.json) */
+.totals {
+  margin: 2.25rem 0 0;
+  width: min(440px, 100%);
+}
+
+.totals-head {
+  margin: 0 0 0.7rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.totals dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.totals dl > div + div {
+  border-left: 1px solid #ececec;
+}
+
+.totals dt {
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.totals dt::before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 6px;
+  border-radius: 50%;
+  vertical-align: 0;
+  background: var(--fg);
+}
+
+.totals .t-red dt::before {
+  background: #d6283b;
+}
+
+.totals .t-blue dt::before {
+  background: #1f50d0;
+}
+
+.totals .t-all dt::before {
+  display: none;
+}
+
+.totals dd {
+  margin: 0.3rem 0 0;
+  font-size: clamp(1.35rem, 5vw, 1.7rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
 .reveal {
   margin: 2.25rem 0 0;
   width: min(440px, 100%);

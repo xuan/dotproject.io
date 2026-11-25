@@ -215,6 +215,8 @@ function onClick(e) {
 const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
 function onKey(e) {
+  // typing in the header search: leave its keys (arrows move the caret, Esc clears it) alone
+  if (e.target.closest && e.target.closest("input, textarea, select")) return;
   if (e.key === "Escape") {
     viewer.viewport.goHome();              // reset zoom
     document.getElementById("panel").classList.remove("open");

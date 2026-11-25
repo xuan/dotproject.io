@@ -29,7 +29,9 @@ Tracked files:
 ```text
 _config.yml            site config (title, url, baseurl="", exclude list)
 _layouts/default.html  shared page shell: <head>, global stylesheet, per-page styles:/scripts:
-index.html             landing page — wordmark + search form + canvas carousel (one slide per canvas)
+index.html             landing page — wordmark + search form + red/blue/total dot counts + canvas carousel
+                         (one slide per canvas)
+_data/canvases.json    the landing page's dot counts (all canvases + per canvas); written by build_site.py
 images/canvas1/        everything for canvas 1 (masters ignored, see below):
                          canvas1-{480,720,960,1440}.jpg  landing-page derivatives
                          canvas1.dzi + canvas1_files/    deep-zoom tiles for canvas.html
@@ -38,7 +40,7 @@ images/canvas1/        everything for canvas 1 (masters ignored, see below):
 images/canvas2/        the same set for canvas 2 (canvas2-*.jpg, canvas2.dzi + canvas2_files/,
                          dots.json, texts.json)
 images/canvas3/        the same set for canvas 3
-canvas.html            deep-zoom canvas viewer — tap a dot to read its comment
+canvas.html            deep-zoom canvas viewer — search box in the header; tap a dot to read its comment
                          (?c=N picks the canvas, default 1; ?dot=N deep-links to a dot);
                          side arrows switch canvases in place, like the landing carousel
 comments.html          results page — client-side search UI (front matter + body)
@@ -145,8 +147,9 @@ Pillow and opencv-python(-headless), plus macOS `sips` and `cjpeg`. N = the new 
    then for real. Diff the old canvases' `dots.json` `ci` against the previous build: only the expected
    dots should change.
 4. **Site code.** Add a slide to the carousel in `index.html`, and raise `CANVAS_COUNT` in
-   `assets/canvas.js` and `CANVASES` in `assets/comments.js`. The viewer arrows and the "Canvas N of M"
-   label follow automatically.
+   `assets/canvas.js` and `CANVASES` in `assets/comments.js`. The viewer arrows, the "Canvas N of M"
+   label and the landing page's red / blue / total counts (`_data/canvases.json`, from
+   `build_site.py`) follow automatically.
 5. **Check:** `bundle exec jekyll build`; then in a browser check the carousel, the viewer's
    switching, a `?c=N&dot=…` link and the search page's "Find this dot on canvas N" links. Add the new
    canvas to the dot-count table above.
@@ -190,7 +193,14 @@ watch the repo's **Actions** tab, or `gh api repos/<owner>/dotproject.io/pages/b
 Two pages, one dataset, deliberately split so the heavy JSON never loads on the landing page:
 
 - **index.html** has a plain `<form method="get" action="/comments.html">` with an input
-  `name="q"`. Submitting navigates to `comments.html?q=<text>`. The only script on the landing page
+  `name="q"`. Submitting navigates to `comments.html?q=<text>`. The viewer's header has the same form
+  (`.cv-search`). `canvas.js` ignores keys typed into it, so arrows move the caret and don't jump between
+  dots. The comment panel sits inside the stage, below the header, so it never covers the search.
+- Below the landing search, **red / blue / total** dot counts for all canvases come from
+  `_data/canvases.json` at build time; the page loads no data. Red / blue = the colour of the comment each
+  dot shows (red = UNDERAGE or INCEST), so red + blue = total; the 10 half red / half blue dots count by
+  their comment (the table above counts them by paint). `build_site.py` rewrites the file on every
+  rebuild. The only script on the landing page
   is the small carousel helper `assets/home.js`; the ~10 MB `comments.json` is *not* fetched there.
 - The landing carousel is a CSS scroll-snap strip (swipe / trackpad / ←→ keys); the side arrows
   appear on hover (always shown on touch screens, which can't hover) and hide at either end. Each

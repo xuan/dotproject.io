@@ -14,6 +14,15 @@ scripts:
            aria-label="Search for your comment" />
     <button type="submit">Search for your comment</button>
   </form>
+  {%- assign t = site.data.canvases %}
+  <section class="totals" aria-label="Dots on all {{ t.count }} canvases">
+    <p class="totals-head">All {{ t.count }} canvases</p>
+    <dl>
+      <div class="t-red"><dt>Red</dt><dd>{{ t.shown.red }}</dd></div>
+      <div class="t-blue"><dt>Blue</dt><dd>{{ t.shown.blue }}</dd></div>
+      <div class="t-all"><dt>Total</dt><dd>{{ t.shown.dots }}</dd></div>
+    </dl>
+  </section>
   <figure class="reveal">
     <div class="carousel" data-carousel>
       <div class="car-track" tabindex="0" role="region" aria-label="The canvases — scroll sideways for more">
