@@ -37,6 +37,7 @@ images/canvas1/        everything for canvas 1 (masters ignored, see below):
                          texts.json                      comment text per dot
 images/canvas2/        the same set for canvas 2 (canvas2-*.jpg, canvas2.dzi + canvas2_files/,
                          dots.json, texts.json)
+images/canvas3/        the same set for canvas 3
 canvas.html            deep-zoom canvas viewer — tap a dot to read its comment
                          (?c=N picks the canvas, default 1; ?dot=N deep-links to a dot);
                          side arrows switch canvases in place, like the landing carousel
@@ -60,14 +61,15 @@ Each page carries YAML front matter (`layout: default`, `title`, `description`, 
 
 ## Canvas dot counts
 
-Recounted on 2026-11-23 from `images/canvas1/canvas1_4x.jpg` and `images/canvas2/canvas2.jpg`
-(`ig-comments/tools/canvas/detect_dots.py` + `lattice.py`): colour segmentation, connected
+Recounted on 2026-11-23 from `images/canvas1/canvas1_4x.jpg` and `images/canvas2/canvas2.jpg`, and on
+2026-11-25 from `images/canvas3/canvas3.jpg` (`ig-comments/tools/canvas/detect_dots.py` + `lattice.py`): colour segmentation, connected
 components, every dot placed on the hex lattice. Red = assaulted under 18; blue = 18+.
 
 | Canvas   | Red   | Blue  | Half red / half blue | Total dots |
 |----------|------:|------:|---------------------:|-----------:|
 | Canvas 1 | 8,660 | 2,733 | 3                    | **11,396** |
 | Canvas 2 | 8,762 | 2,599 | 1                    | **11,362** |
+| Canvas 3 | 8,719 | 2,595 | 6                    | **11,320** |
 
 - **Canvas 1** excludes the single black dot in the middle and the small gold crown painted above it.
   The 2026-11-22 count (11,395) missed one brownish red-over-blue dot at row 85, column 6; it is now
@@ -75,17 +77,26 @@ components, every dot placed on the hex lattice. Red = assaulted under 18; blue 
   ring around the black dot. At the bottom edge one oversized blob is two overlapping dots (kept as 2).
 - **Canvas 2** is a full 92-column lattice, 247 rows × 46 dots, no gaps; one blob of two touching red
   dots counts as 2.
+- **Canvas 3** is 246 full rows × 46 dots plus a last row of only 4 (bottom left; the rest of that row is
+  blank paper, not cropped). Two blobs of two touching red dots had been split into 3 parts each;
+  `lattice.py` now merges parts of one blob that land on the same site. A few red dots near the top left
+  are brownish (red painted over blue); they count as red and match red comments.
 - A dot is **half red / half blue** when at least 30% of it is the second colour. Many blue dots carry
   a small red crescent (and a few red dots a blue one); those are brush slips, not a code — they
   don't follow the incest label — and count by their main colour.
 
 ## Which comment each dot shows
 
-Both canvases were painted in comment order (`#k`, the classifier's numbering 1–49,865), row by row
+All canvases were painted in comment order (`#k`, the classifier's numbering 1–49,865), row by row
 top to bottom, every row left to right, red/blue by the classifier's original age label. Canvas 1
-holds #1–#11,416, canvas 2 #11,417–#22,777. The painted mapping was recovered by aligning painted
-colours with the comment stream (canvas 1 on 2026-11-03, canvas 2 on 2026-11-23, 99.9% colour
-agreement).
+holds #1–#11,416, canvas 2 #11,417–#22,777, canvas 3 #22,778–#34,094. The painted mapping was recovered
+by aligning painted colours with the comment stream (canvas 1 on 2026-11-03, canvas 2 on 2026-11-23,
+canvas 3 on 2026-11-25; 99.9% colour agreement).
+
+Canvas 3 was painted before the 2026-11-23 rematch, so the painter did **not** skip the 865 comments
+(#22,778–#27,349) that the rematch had used to fill dots on canvases 1–2. Those comments now sit on
+canvas 3, where they are painted (the same rule as #16,003). The 865 dots on canvases 1–2 that held them
+(470 on canvas 1, 395 on canvas 2) got new comments. No other dot on canvases 1–2 changed.
 
 After the hand review of all comments (2026-11-23) the site data is rebuilt from
 `ig-comments/data/classified/markdown` by `ig-comments/tools/canvas/build_site.py`
@@ -95,7 +106,9 @@ After the hand review of all comments (2026-11-23) the site data is rebuilt from
   INCEST; a half red / half blue dot takes either;
 - every dot keeps the comment painted there unless the review removed it or its colour no longer fits;
   mismatches first swap with the nearest opposite mismatch, then take displaced comments, then
-  never-painted comments in painting order right after canvas 2 (#22,778 on);
+  never-painted comments in painting order right after the last painted canvas (after canvas 3:
+  #34,109 on; 1,298 used up to #40,832, listed in `ig-comments/data/canvas/REMATCH.md` for the painter
+  to skip on canvas 4);
 - a comment is on at most one dot; comments without a dot stay searchable.
 
 `dots.json` = `{w, h, origin (canvas 1 only), n, x, y, cat (0 under 18, 1 adult, 2 incest),
@@ -103,7 +116,7 @@ paint (0 red, 1 blue, 2 half), read (rank in painting order), ci (index into com
 **Don't regenerate `comments.json` with `ig-comments/tools/export_site_comments.py`** — that is the
 old unreviewed export; it renumbers every comment and breaks every dot's `ci`.
 
-## Adding a canvas (canvas 3, …)
+## Adding a canvas (canvas 4, …)
 
 Scripts are in `ig-comments/tools/canvas/` (README there); they need a Python with numpy, scipy,
 Pillow and opencv-python(-headless), plus macOS `sips` and `cjpeg`. N = the new canvas number.
@@ -114,16 +127,23 @@ Pillow and opencv-python(-headless), plus macOS `sips` and `cjpeg`. N = the new 
 2. **Images — the owner's settings (2026-11-23):** pure white paper on every canvas, and dots as
    vivid as canvas 2's.
    `web_images.py images/canvasN/canvasN.jpg images/canvasN canvasN --chroma K --gamma G --white`.
-   Start from canvas 2's `--chroma 1.9 --gamma 0.72` for an untouched photo; skip the boost if the
-   master is already boosted (canvas 1 is). Target dot colours, measured in LAB on the master: canvas 2
-   red L≈52 / chroma≈102 and blue L≈45 / chroma≈97 (canvas 1: red 46/87, blue 35/101). Check close-ups
-   before publishing; going much past ×1.9 makes the reds go flat and the blues wash out.
+   Measure the master's dot colours in LAB first; the boost depends on how the photo was exported.
+   Target: canvas 2's published reds, L≈53 / chroma≈104 (its blues are L≈47 / chroma≈92). Canvas 2's
+   untouched master (red 37/68) needed `--chroma 1.9 --gamma 0.72`. Canvas 3's master came already
+   vivid (red 47.5/92, blue 27.5/118), and `--chroma 1.2 --gamma 0.85` was enough. Canvas 1's master
+   is pre-boosted, so it gets no boost. Check close-ups before publishing; going much past ×1.9 makes
+   the reds go flat and the blues wash out. Canvas 3's blue is a different paint (deep ultramarine,
+   already at the sRGB limit), so match the reds and leave the blue's hue alone.
 3. **Dots → comments.** Run `detect_dots.py` (draft divisor 1 for a normal photo) and `lattice.py`.
-   Then run `align.py`, starting the comment stream right after canvas 2's last painted comment
-   (#22,777). Pass `--skip` with the 865 never-painted comments the rematch already placed on
-   canvases 1–2 (#22,778–#27,349; listed in `ig-comments/data/canvas/rematch.json` →
-   `never_painted_used`), if the painter skipped them as asked. Then extend `painted.py` and
-   `CANVASES` in `build_site.py` to canvas N, and run `build_site.py --check`, then for real.
+   Then run `align.py`, starting the comment stream right after the previous canvas's last painted
+   comment (canvas 3: #34,094). Run it twice, with and without `--skip` set to the never-painted
+   comments the rematch already placed on dots (`ig-comments/data/canvas/rematch.json` →
+   `never_painted_used`). Keep the run whose colours agree (~99.9%); the other one collapses. That
+   shows whether the painter skipped them. If the painter didn't, `build_site.py` moves those comments
+   to the new canvas and refills the old dots, as it did for canvas 3. Then add N to `painted.py`
+   (`painted.py <ig> <site> N`) and to `CANVASES` in `build_site.py`, and run `build_site.py --check`,
+   then for real. Diff the old canvases' `dots.json` `ci` against the previous build: only the expected
+   dots should change.
 4. **Site code.** Add a slide to the carousel in `index.html`, and raise `CANVAS_COUNT` in
    `assets/canvas.js` and `CANVASES` in `assets/comments.js`. The viewer arrows and the "Canvas N of M"
    label follow automatically.
@@ -211,6 +231,8 @@ The raw sources are git-ignored and must **never** be committed or published any
 - `images/canvas1/canvas1.jpg` — the full-resolution master photograph (~11 MB).
 - `images/canvas1/canvas1_4x.jpg` — the 4× upscaled master (~65 MB).
 - `images/canvas2/canvas2.jpg` / `canvas2_4x.jpg` — canvas 2's master photo and 4× upscale.
+- `images/canvas3/canvas3.jpg` — canvas 3's master photo (Lightroom export; carries camera EXIF and
+  the owner's copyright/contact).
 - `images/canvas1/_pre_wb/` — backups of the canvas 1 masters from before the white-balance fix.
 - the raw close-up macro photo set (hundreds of large frames), wherever it lands under
   `images/canvas1/`.
@@ -219,7 +241,7 @@ The raw sources are git-ignored and must **never** be committed or published any
 They are source material for a gigapixel image being assembled with external tools, not web
 assets. `.gitignore` ignores **everything** under `images/canvas1/` and then re-includes only the
 small web derivatives by name, so a new master/frame dropped in there stays private by default.
-`images/canvas2/` works the same way.
+`images/canvas2/` and `images/canvas3/` work the same way.
 `_config.yml` separately excludes the two named masters from the Jekyll build (the sources aren't in
 git, so a server build never sees them anyway — but don't re-add a bare `images/canvas1` exclude: it
 greedily drops the whole `images/` tree, derivatives included).
@@ -235,12 +257,13 @@ Also published from the same folder (each re-included by name in `.gitignore`): 
 `canvas1.dzi` + `canvas1_files/` (417 tiles, ~11 MB, generated from `canvas1.jpg` — the owner
 approved publishing the master as tiles for the zoom viewer) and the viewer data `dots.json` /
 `texts.json`. Any new file you want served from `images/canvas1/` needs its own `!` line.
-Both canvases' published images (landing sizes + tiles) are built in one step by
+Every canvas's published images (landing sizes + tiles) are built in one step by
 `ig-comments/tools/canvas/web_images.py`, which never modifies the masters:
 
 ```sh
 web_images.py images/canvas1/canvas1.jpg images/canvas1 canvas1 --white
 web_images.py images/canvas2/canvas2.jpg images/canvas2 canvas2 --chroma 1.9 --gamma 0.72 --white
+web_images.py images/canvas3/canvas3.jpg images/canvas3 canvas3 --chroma 1.2 --gamma 0.85 --white
 ```
 
 - `--white` makes the paper pure white (owner, 2026-11-23): pixels with low colour and high lightness
@@ -250,6 +273,9 @@ web_images.py images/canvas2/canvas2.jpg images/canvas2 canvas2 --chroma 1.9 --g
   looked dull next to canvas 1, whose master already carries chroma ×1.4 and a white balance, and the
   owner asked twice for stronger and brighter. ×1.9 is about the ceiling: beyond it the reds hit the
   sRGB limit and go flat while the blues wash out.
+- Canvas 3's master arrived already vivid, so it gets only ×1.2 / gamma 0.85. That brings its reds to
+  canvas 2's (L≈53 / chroma≈101 vs 53/104). Its blue stays a deep ultramarine (L≈32 / chroma≈132),
+  which is a different paint from canvas 2's azure.
 - Tiles: 256 px, overlap 1, quality 75; landing sizes: `sips` → `cjpeg -quality 72 -progressive
   -optimize -sample 1x1`. Both use full-resolution colour (4:4:4) so the white paper doesn't pick up a
   pink/blue tint next to the dots; no EXIF/XMP/ICC metadata.

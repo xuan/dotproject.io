@@ -5,7 +5,7 @@
    and flies to dot N (used by the search page's "find this dot" links). Esc resets the view.
    The side arrows (shown on hover, like the landing page) switch canvases in place. */
 
-const CANVAS_COUNT = 2;
+const CANVAS_COUNT = 3;
 /* "Request a change" link in the dot panel → owner's Google Form, prefilled with
    canvas, dot index (?dot= value) and comment index (ci into comments.json).
    Keep in sync with CHANGE_FORM in comments.js. The link stays hidden while url is "". */

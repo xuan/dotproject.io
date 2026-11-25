@@ -12,7 +12,7 @@ let shown = 0;
 let query = "";
 let dotOf = null;     // comment index -> dot index on its canvas (-1 if it has no dot)
 let canvasOf = null;  // comment index -> canvas number (1, 2, ...)
-const CANVASES = [1, 2];
+const CANVASES = [1, 2, 3];
 // Same Google Form as CHANGE_FORM in canvas.js (keep in sync); hidden while url is "".
 const CHANGE_FORM = {
   url: "https://docs.google.com/forms/d/e/1FAIpQLSd-dLZonVQzHA44ixR2Yg-7XvNwHKt8mBlhTzfrZzzIpOtpcQ/viewform",
