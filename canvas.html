@@ -13,6 +13,11 @@ scripts:
   <header class="cv-head">
     <h1 class="wordmark"><a href="{{ '/' | relative_url }}">Dot Project</a></h1>
     <p class="cv-sub">Every dot is a survivor. Zoom in and tap a dot to read their words.</p>
+    <form class="cv-search" action="{{ '/comments.html' | relative_url }}" method="get" role="search">
+      <input name="q" type="search" autocomplete="off" spellcheck="false"
+             placeholder="Search for your comment…" aria-label="Search for your comment" />
+      <button type="submit">Search</button>
+    </form>
   </header>
 
   <div class="cv-stage-wrap">
@@ -30,21 +35,22 @@ scripts:
       <button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button>
       <button id="zhome" title="Reset view (Esc)" aria-label="Reset view">&#9678;</button>
     </div>
-  </div>
 
-  <aside class="cv-panel" id="panel" aria-live="polite">
-    <div class="cv-panel-head">
-      <span class="cv-cat" id="p-cat"></span>
-      <button class="cv-close" id="p-close" aria-label="Close">&times;</button>
-    </div>
-    <div class="cv-body">
-      <div class="cv-text" id="p-text"></div>
-    </div>
-    <p class="cv-note" id="p-note" hidden></p>
-    <div class="cv-nav" id="p-nav" hidden>
-      <button id="p-prev">&larr; Previous</button>
-      <button id="p-next">Next &rarr;</button>
-    </div>
-    <a class="cv-report" id="p-report" target="_blank" rel="noopener" hidden>Is this your comment? Fix the wording or report the wrong colour</a>
-  </aside>
+    <!-- inside the stage, so it opens below the header and the search stays usable -->
+    <aside class="cv-panel" id="panel" aria-live="polite">
+      <div class="cv-panel-head">
+        <span class="cv-cat" id="p-cat"></span>
+        <button class="cv-close" id="p-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="cv-body">
+        <div class="cv-text" id="p-text"></div>
+      </div>
+      <p class="cv-note" id="p-note" hidden></p>
+      <div class="cv-nav" id="p-nav" hidden>
+        <button id="p-prev">&larr; Previous</button>
+        <button id="p-next">Next &rarr;</button>
+      </div>
+      <a class="cv-report" id="p-report" target="_blank" rel="noopener" hidden>Is this your comment? Fix the wording or report the wrong colour</a>
+    </aside>
+  </div>
 </div>
