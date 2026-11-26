@@ -20,6 +20,19 @@ scripts:
     </form>
   </header>
 
+  <!-- the open canvas: its red / blue / total dots and a link to buy a print (filled by canvas.js,
+       kept current when the arrows switch canvas) -->
+  <div class="cv-info" id="cinfo" hidden>
+    <span class="cv-info-name" id="i-name"></span>
+    <dl class="cv-counts">
+      <div class="t-red"><dt>Red</dt><dd id="i-red"></dd></div>
+      <div class="t-blue"><dt>Blue</dt><dd id="i-blue"></dd></div>
+      <div class="t-all"><dt>Total</dt><dd id="i-total"></dd></div>
+    </dl>
+    <a class="cv-buy" id="i-buy" target="_blank" rel="noopener" hidden>Buy a print</a>
+  </div>
+  <script type="application/json" id="canvas-info">{"counts": {{ site.data.canvases.canvases | jsonify }}, "prints": {{ site.data.prints | jsonify }}}</script>
+
   <div class="cv-stage-wrap">
     <div id="osd"></div>
 

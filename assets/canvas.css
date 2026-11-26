@@ -44,6 +44,32 @@ body {
 }
 .cv-search button:hover { opacity: 0.85; }
 
+/* the open canvas: red / blue / total dots + "Buy a print" (filled by canvas.js) */
+.cv-info {
+  flex: 0 0 auto; z-index: 6;
+  display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  padding: 8px 16px; border-bottom: 1px solid #ececec; background: var(--bg);
+}
+.cv-info[hidden], .cv-buy[hidden] { display: none; }
+.cv-info-name { font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em; }
+.cv-counts { margin: 0; display: flex; align-items: baseline; gap: 18px; }
+.cv-counts > div { display: flex; align-items: baseline; gap: 6px; }
+.cv-counts dt { font-size: 0.78rem; color: var(--muted); }
+.cv-counts dt::before {
+  content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 5px;
+  border-radius: 50%; vertical-align: 0;
+}
+.cv-counts .t-red dt::before { background: var(--under); }
+.cv-counts .t-blue dt::before { background: var(--adult); }
+.cv-counts .t-all dt::before { display: none; }
+.cv-counts dd { margin: 0; font-size: 0.95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cv-buy {
+  margin-left: auto; padding: 7px 14px; white-space: nowrap;
+  border: 1px solid var(--fg); border-radius: 9px; background: #fff; color: var(--fg);
+  font-size: 0.85rem; text-decoration: none;
+}
+.cv-buy:hover, .cv-buy:focus-visible { background: var(--fg); color: #fff; }
+
 /* stage */
 .cv-stage-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
 /* OpenSeadragon forces position:relative on its container, so size it explicitly. */
@@ -144,6 +170,13 @@ body {
   .cv-sub { display: none; }
   .cv-head { gap: 12px; padding: 10px 12px; }
   .cv-search { flex-basis: 150px; }
+  /* phone: the "Canvas N of M" pill already names the canvas; keep the swatches, drop the words */
+  .cv-info { gap: 12px; padding: 7px 12px; }
+  .cv-info-name { display: none; }
+  .cv-counts { gap: 12px; }
+  .cv-counts .t-red dt, .cv-counts .t-blue dt { font-size: 0; }
+  .cv-counts .t-red dt::before, .cv-counts .t-blue dt::before { margin-right: 0; }
+  .cv-buy { padding: 6px 11px; font-size: 0.8rem; }
   .cv-search input { font-size: 1rem; }      /* 16px: stops iOS zooming in on focus */
   .cv-panel {
     width: 100%; max-width: 100%; top: auto; height: 62vh;

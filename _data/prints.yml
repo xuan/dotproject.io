@@ -1,0 +1,5 @@
+# "Buy a print" button in the canvas viewer (canvas.html): the artist's store page for each canvas.
+# Add a line when a canvas is added; a canvas without a line shows no button.
+"1": https://www.elisekhong.art/store/p/canvas-1-print
+"2": https://www.elisekhong.art/store/p/canvas-2
+"3": https://www.elisekhong.art/store/p/canvas-3
