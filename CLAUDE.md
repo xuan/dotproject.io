@@ -31,7 +31,9 @@ _config.yml            site config (title, url, baseurl="", exclude list)
 _layouts/default.html  shared page shell: <head>, global stylesheet, per-page styles:/scripts:
 index.html             landing page — wordmark + search form + red/blue/total dot counts + canvas carousel
                          (one slide per canvas)
-_data/canvases.json    the landing page's dot counts (all canvases + per canvas); written by build_site.py
+_data/canvases.json    dot counts (all canvases + per canvas) for the landing page and the viewer's bar;
+                         written by build_site.py
+_data/prints.yml       "Buy a print" link per canvas (the artist's store), shown in the viewer's bar
 images/canvas1/        everything for canvas 1 (masters ignored, see below):
                          canvas1-{480,720,960,1440}.jpg  landing-page derivatives
                          canvas1.dzi + canvas1_files/    deep-zoom tiles for canvas.html
@@ -40,7 +42,8 @@ images/canvas1/        everything for canvas 1 (masters ignored, see below):
 images/canvas2/        the same set for canvas 2 (canvas2-*.jpg, canvas2.dzi + canvas2_files/,
                          dots.json, texts.json)
 images/canvas3/        the same set for canvas 3
-canvas.html            deep-zoom canvas viewer — search box in the header; tap a dot to read its comment
+canvas.html            deep-zoom canvas viewer — search box in the header; a bar under it with the open
+                         canvas's red / blue / total dots and a "Buy a print" button; tap a dot to read its comment
                          (?c=N picks the canvas, default 1; ?dot=N deep-links to a dot);
                          side arrows switch canvases in place, like the landing carousel
 comments.html          results page — client-side search UI (front matter + body)
@@ -147,9 +150,10 @@ Pillow and opencv-python(-headless), plus macOS `sips` and `cjpeg`. N = the new 
    then for real. Diff the old canvases' `dots.json` `ci` against the previous build: only the expected
    dots should change.
 4. **Site code.** Add a slide to the carousel in `index.html`, and raise `CANVAS_COUNT` in
-   `assets/canvas.js` and `CANVASES` in `assets/comments.js`. The viewer arrows, the "Canvas N of M"
-   label and the landing page's red / blue / total counts (`_data/canvases.json`, from
-   `build_site.py`) follow automatically.
+   `assets/canvas.js` and `CANVASES` in `assets/comments.js`, and add the canvas's store link to
+   `_data/prints.yml` (without one the viewer shows no "Buy a print" button). The viewer arrows, the
+   "Canvas N of M" label and the red / blue / total counts on the landing page and in the viewer's bar
+   (`_data/canvases.json`, from `build_site.py`) follow automatically.
 5. **Check:** `bundle exec jekyll build`; then in a browser check the carousel, the viewer's
    switching, a `?c=N&dot=…` link and the search page's "Find this dot on canvas N" links. Add the new
    canvas to the dot-count table above.
@@ -206,6 +210,12 @@ Two pages, one dataset, deliberately split so the heavy JSON never loads on the 
   appear on hover (always shown on touch screens, which can't hover) and hide at either end. Each
   slide links to `canvas.html?c=N`. Adding a canvas = a new slide in `index.html`, its number in
   `CANVAS_COUNT` (`assets/canvas.js`) and `CANVASES` (`assets/comments.js`).
+- Under the viewer's header, a bar (`.cv-info`) shows the open canvas's red / blue / total dots (same
+  counting as the landing page) and a "Buy a print" button to that canvas's page in the artist's store
+  (new tab). `canvas.html` embeds `site.data.canvases` + `site.data.prints` as JSON (`#canvas-info`).
+  `canvas.js` fills the bar at once and refills it on every canvas switch. On phones the bar drops the
+  canvas name, because the "Canvas N of M" pill shows it, and keeps the red/blue swatches without the
+  words.
 - The viewer (`canvas.html`) reuses the carousel's `.car-arrow` buttons at the stage's sides (shown on
   hover, always on touch, hidden at the ends, kept clear of the open comment panel) plus a
   "Canvas N of M" label. Switching happens in place: the old canvas slides out, `viewer.open()` loads
