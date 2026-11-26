@@ -24,6 +24,32 @@ let canvas = (() => {
   return c >= 1 && c <= CANVAS_COUNT ? c : 1;
 })();
 let BASE = "images/canvas" + canvas + "/";
+
+/* the bar under the header: the open canvas's red / blue / total dots (site.data.canvases, the
+   same counts as the landing page) and its "Buy a print" link (site.data.prints), embedded in
+   canvas.html as #canvas-info. Filled right away (no flash) and again on every canvas switch. */
+const INFO = (() => {
+  try { return JSON.parse(document.getElementById("canvas-info").textContent); } catch (e) { return null; }
+})();
+function updateInfo() {
+  const row = INFO && INFO.counts && INFO.counts.find(r => r.canvas === canvas);
+  const bar = document.getElementById("cinfo");
+  bar.hidden = !row;
+  if (!row) return;
+  const fmt = (n) => n.toLocaleString("en-US");
+  document.getElementById("i-name").textContent = "Canvas " + canvas;
+  document.getElementById("i-red").textContent = fmt(row.red);
+  document.getElementById("i-blue").textContent = fmt(row.blue);
+  document.getElementById("i-total").textContent = fmt(row.dots);
+  const buy = document.getElementById("i-buy");
+  const url = INFO.prints && INFO.prints[String(canvas)];
+  buy.hidden = !url;
+  if (url) {
+    buy.href = url;
+    buy.setAttribute("aria-label", "Buy a print of canvas " + canvas + " (opens the artist's store)");
+  }
+}
+updateInfo();
 let loadSeq = 0;                   // ignores data that arrives for a canvas we already left
 let slideIn = 0;                   // direction of the switch animation still to finish (+1 / -1)
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -136,6 +162,7 @@ function updateSwitcher() {
   document.getElementById("cprev").title = canvas > 1 ? "Canvas " + (canvas - 1) : "";
   document.getElementById("cnext").title = canvas < CANVAS_COUNT ? "Canvas " + (canvas + 1) : "";
   document.getElementById("cwhich").textContent = "Canvas " + canvas + " of " + CANVAS_COUNT;
+  updateInfo();
 }
 
 /* ---------- data ---------- */
