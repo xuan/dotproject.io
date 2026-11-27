@@ -4,7 +4,9 @@ Context for working on **dotproject.io**, the public website for the Dot Project
 
 - **Product context** (users, purpose, care rules, brand) is in [PRODUCT.md](PRODUCT.md).
 - **Setup, build and the domain** are in [README.md](README.md).
-- **Adding a canvas** is the [add-canvas skill](.claude/skills/add-canvas/SKILL.md).
+- **Adding a canvas:** the owner puts the photo in a new folder as `images/canvasN/canvasN.jpg`.
+  Claude first makes `canvasN_4x.jpg` with colouring and brightness identical to `canvas1_4x.jpg`,
+  then the rest of the images. The steps are in the [add-canvas skill](.claude/skills/add-canvas/SKILL.md).
 
 ## Working agreement (read first)
 
@@ -306,10 +308,16 @@ The colour rules decide whether the comment moves to another dot.
 **Never committed or published anywhere.** These raw sources are git-ignored:
 
 - `images/canvas1/canvas1.jpg`: the full-resolution master photograph (~11 MB);
-- `images/canvas1/canvas1_4x.jpg`: the 4× upscaled master (~65 MB);
-- `images/canvas2/canvas2.jpg` / `canvas2_4x.jpg`: canvas 2's master photo and 4× upscale;
+- `images/canvas1/canvas1_4x.jpg`: the 4× master, rebuilt on 2026-11-27 with `upscale4x.py --white`
+  (canvas 1's web settings). The previous version, with grey paper and lighter reds, is in
+  `_pre_colour/`. Dot detection on the new file finds the same 11,397 dots;
+- `images/canvas2/canvas2.jpg` / `canvas2_4x.jpg`: canvas 2's master photo and its 4×, rebuilt on
+  2026-11-27 with `upscale4x.py` and canvas 2's flags (below). The 2026-11-15 original (Lanczos ×4,
+  unsharp mask, chroma ×1.4, q94) is in `_pre_colour/`;
 - `images/canvas3/canvas3.jpg`: canvas 3's master (a Lightroom export carrying camera EXIF and the
-  owner's copyright and contact);
+  owner's copyright and contact), left unboosted;
+- `images/canvas3/canvas3_4x.jpg`: its 4×, built on 2026-11-27 with `upscale4x.py` and canvas 3's
+  flags (below);
 - `images/canvas1/_pre_wb/`: backups of the canvas 1 masters from before the white-balance fix;
 - the raw close-up macro photo set (hundreds of large frames), wherever it lands under
   `images/canvas1/`;
@@ -340,23 +348,35 @@ three edits: generate the file, add its `!` line to `.gitignore` for each canvas
 
 ```sh
 web_images.py images/canvas1/canvas1.jpg images/canvas1 canvas1 --white
-web_images.py images/canvas2/canvas2.jpg images/canvas2 canvas2 --chroma 1.9 --gamma 0.72 --white
-web_images.py images/canvas3/canvas3.jpg images/canvas3 canvas3 --chroma 1.2 --gamma 0.85 --white
+web_images.py images/canvas2/canvas2.jpg images/canvas2 canvas2 --chroma 1.9 --gamma 0.72 --match canvas2 --white
+web_images.py images/canvas3/canvas3.jpg images/canvas3 canvas3 --chroma 1.2 --gamma 0.85 --match canvas3 --white
 ```
+
+**Every canvas looks like canvas 1** (owner, 2026-11-27), with the same red (L≈45 / chroma≈89 / hue
+34°), the same blue (L≈37 / chroma≈101 / hue −60°) and white paper. This replaced the earlier aim of
+canvas 2's brighter reds. Canvas 1 is the reference.
 
 - **`--white`** makes the paper pure white (owner, 2026-11-23): pixels with low colour and high
   lightness are blended to #fff. The dots, the black dot and the gold crown are untouched, and dot
   edges blend without halos.
-- **Canvas 2 is boosted** (LAB chroma ×1.9, lightness gamma 0.72; `vivid.py`). The untouched photo
-  looked dull next to canvas 1, whose master already carries chroma ×1.4 and a white balance, and
-  the owner asked twice for stronger and brighter. ×1.9 is about the ceiling.
-- **Canvas 3 gets only ×1.2 / gamma 0.85.** Its master arrived already vivid, and this brings its
-  reds to canvas 2's (L≈53 / chroma≈101 vs 53/104). Its blue stays a deep ultramarine (L≈32 /
-  chroma≈132), a different paint from canvas 2's azure.
+- **`--chroma` / `--gamma`** (`vivid.py`) give a rough boost first: ×1.9 / 0.72 for canvas 2's dull
+  export, ×1.2 / 0.85 for canvas 3's already vivid one. Canvas 1's master already carries chroma ×1.4
+  and a white balance.
+- **`--match canvasN`** (`paint_match.py`, fitted to `canvas1_4x.jpg`, stored in
+  `paint_match.json`) then moves the red paint and the blue paint separately (lightness, chroma, hue)
+  onto canvas 1's. One boost can't do it: canvas 2's reds needed less chroma while its blues needed
+  more, and canvas 3's blue is a different paint (an ultramarine). Paper, the black dot and grey are
+  untouched.
 - **Encoding:** tiles are 256 px, overlap 1, quality 75. Landing sizes go through `sips`, then
   `cjpeg -quality 72 -progressive -optimize -sample 1x1`. Both use full-resolution colour (4:4:4),
   so the white paper doesn't pick up a pink or blue tint next to the dots, and carry no EXIF, XMP or
   ICC metadata.
+
+**The 4× masters** (private) are made with `upscale4x.py`, using the same flags as each canvas's
+web images, e.g.
+`upscale4x.py images/canvas3/canvas3.jpg images/canvas3/canvas3_4x.jpg --chroma 1.2 --gamma 0.85 --match canvas3 --white`.
+Two checks must print OK. `colour_check.py <4x> <canvasN-1440.jpg>` checks the 4× against its own web
+images, and `colour_check.py <4x> images/canvas1/canvas1_4x.jpg --across` checks it against canvas 1.
 
 For a new canvas, the add-canvas skill covers measuring the master and choosing its settings.
 
