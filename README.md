@@ -108,3 +108,11 @@ In GitHub Pages (**Settings → Pages**), the domain is verified with **Enforce 
 
 To put the site behind Cloudflare's proxy / CDN later, first set the SSL/TLS mode to `Full`, never
 `Flexible`. Then switch the records to proxied (orange cloud).
+
+## Analytics
+
+Visits are counted with **Cloudflare Web Analytics** (Cloudflare dashboard → Web Analytics). The
+beacon snippet is in `_layouts/default.html` and is only included in the live build
+(`JEKYLL_ENV=production`, which GitHub Pages sets), so local previews aren't counted. It sets no
+cookies, and it sends page paths without their query, so search text never reaches Cloudflare.
+Details are in [CLAUDE.md](CLAUDE.md#analytics).
