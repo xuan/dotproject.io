@@ -1,0 +1,18 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "_site/index.html",
+          "index.html"
+        ],
+        "createdAt": "2026-11-27T16:37:12.532Z",
+        "reason": "Claude, audit 2026-11-27: rendered at 1280 and 390, the red/blue/total counts are centred in their grid columns with ~40px clear of the hairline dividers; nothing sits flush"
+      }
+    ]
+  }
+}

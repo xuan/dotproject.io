@@ -90,6 +90,17 @@ function init() {
   document.querySelector(".cv-stage-wrap").appendChild(overlay);
   octx = overlay.getContext("2d");
 
+  // keyboard: OpenSeadragon makes its canvas focusable; name it and say how to use it
+  viewer.canvas.setAttribute("role", "application");
+  viewer.canvas.setAttribute("aria-roledescription", "zoomable canvas");
+  // show the canvas's focus ring (canvas.css, .cv.kbd) only to keyboard users: a key press turns it
+  // on, any mouse, pen or touch press turns it off
+  const cvRoot = document.querySelector(".cv");
+  window.addEventListener("keydown", (e) => {
+    if (!["Shift", "Control", "Alt", "Meta"].includes(e.key)) cvRoot.classList.add("kbd");
+  }, true);
+  window.addEventListener("pointerdown", () => cvRoot.classList.remove("kbd"), true);
+
   viewer.addHandler("open", () => {
     tiledImage = viewer.world.getItemAt(0);
     document.getElementById("loading").classList.add("hide");
@@ -106,7 +117,8 @@ function init() {
   });
   viewer.addHandler("animation", draw);
   viewer.addHandler("update-viewport", draw);
-  viewer.addHandler("resize", () => { resizeOverlay(); draw(); });
+  // a resize can change the panel's size, or swap the side panel for the phone sheet
+  viewer.addHandler("resize", () => { setMargins(panelMargins()); resizeOverlay(); draw(); });
   viewer.addHandler("canvas-click", onClick);
   window.addEventListener("resize", () => { resizeOverlay(); draw(); });
   window.addEventListener("keydown", onKey, true);   // capture: beat OSD's own arrow-key panning
@@ -130,7 +142,7 @@ function switchCanvas(c) {
   const dir = c > canvas ? 1 : -1;
   canvas = c;
   BASE = "images/canvas" + c + "/";
-  document.getElementById("panel").classList.remove("open");
+  closePanel();
   selected = -2; pendingDot = null;
   D = null; TEXTS = null; buckets = null; tiledImage = null;
   draw();
@@ -157,11 +169,20 @@ function finishSlide() {                                       // slide the new 
 }
 
 function updateSwitcher() {
-  document.getElementById("cprev").disabled = canvas <= 1;
-  document.getElementById("cnext").disabled = canvas >= CANVAS_COUNT;
-  document.getElementById("cprev").title = canvas > 1 ? "Canvas " + (canvas - 1) : "";
-  document.getElementById("cnext").title = canvas < CANVAS_COUNT ? "Canvas " + (canvas + 1) : "";
+  const prev = document.getElementById("cprev"), next = document.getElementById("cnext");
+  const focused = document.activeElement;    // read before disabling: that blurs the button
+  prev.disabled = canvas <= 1;
+  next.disabled = canvas >= CANVAS_COUNT;
+  prev.title = canvas > 1 ? "Canvas " + (canvas - 1) : "";
+  next.title = canvas < CANVAS_COUNT ? "Canvas " + (canvas + 1) : "";
   document.getElementById("cwhich").textContent = "Canvas " + canvas + " of " + CANVAS_COUNT;
+  if (viewer && viewer.canvas) {
+    viewer.canvas.setAttribute("aria-label",
+      "Canvas " + canvas + " of " + CANVAS_COUNT + ". Press Enter to read the dot at the centre, " +
+      "then use the arrow keys to move from dot to dot. Plus and minus zoom; Escape resets the view.");
+    // reaching the first or last canvas hides the arrow that had focus: keep focus on the canvas
+    if ((focused === prev && prev.disabled) || (focused === next && next.disabled)) viewer.canvas.focus();
+  }
   updateInfo();
 }
 
@@ -237,6 +258,7 @@ function onClick(e) {
   const hit = nearestDot(p.x, p.y);
   if (hit === -2) return;
   select(hit);
+  centreOn(hit);                           // bring the tapped dot to the middle so it's never lost
 }
 
 const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
@@ -245,10 +267,18 @@ function onKey(e) {
   // typing in the header search: leave its keys (arrows move the caret, Esc clears it) alone
   if (e.target.closest && e.target.closest("input, textarea, select")) return;
   if (e.key === "Escape") {
+    closePanel();                          // first: dropping the panel margins stops any animation
     viewer.viewport.goHome();              // reset zoom
-    document.getElementById("panel").classList.remove("open");
     selected = -2;
     draw();
+    return;
+  }
+  // Enter / Space on the focused canvas opens the dot nearest the centre of the view (at any zoom),
+  // so keyboard users can start reading without a mouse; arrows then move from dot to dot
+  if ((e.key === "Enter" || e.key === " ") && selected === -2 &&
+      e.target.closest && e.target.closest("#osd")) {
+    const id = centreDot();
+    if (id !== -2) { e.preventDefault(); e.stopPropagation(); select(id); centreOn(id); }
     return;
   }
   const dir = ARROWS[e.key];
@@ -284,11 +314,28 @@ function neighbour(id, [dx, dy]) {
   return best;
 }
 
+/* the dot (or the origin) nearest the centre of the view, however far: a plain scan of ~11K dots,
+   only run on a key press. -2 until the canvas and its dots have loaded */
+function centreDot() {
+  if (!D || !tiledImage) return -2;
+  const c = tiledImage.viewportToImageCoordinates(viewer.viewport.getCenter(true));
+  let best = -2, bd = Infinity;
+  if (D.origin) {
+    const dx = c.x - D.origin[0], dy = c.y - D.origin[1];
+    best = -1; bd = dx * dx + dy * dy;
+  }
+  for (let i = 0; i < D.n; i++) {
+    const dx = c.x - D.x[i], dy = c.y - D.y[i], dd = dx * dx + dy * dy;
+    if (dd < bd) { bd = dd; best = i; }
+  }
+  return best;
+}
+
 /* pan only when the selected dot drifts near the edge of the view */
 function keepInView(id) {
   const b = tiledImage.viewportToImageRectangle(viewer.viewport.getBounds(true));
   const mx = b.width * 0.15, my = b.height * 0.15, x = D.x[id], y = D.y[id];
-  if (x < b.x + mx || x > b.x + b.width - mx || y < b.y + my || y > b.y + b.height - my) panTo(id);
+  if (x < b.x + mx || x > b.x + b.width - mx || y < b.y + my || y > b.y + b.height - my) centreOn(id);
 }
 
 function select(id) {
@@ -328,7 +375,29 @@ function renderPanel(id) {
     report.hidden = !href;
     if (href) report.href = href;
   }
+  // screen readers hear the position and the words (the panel is inert until it opens)
+  document.getElementById("p-live").textContent = id === -1
+    ? "The first Jane Doe. " + noteEl.textContent
+    : catEl.textContent + ". " + (TEXTS ? TEXTS[id] : "Loading.");
+  openPanel();
+}
+
+function openPanel() {
+  const panel = document.getElementById("panel");
+  panel.inert = false;
   panel.classList.add("open");
+  setMargins(panelMargins());
+}
+
+/* close the panel; if focus was inside it (Close, Previous / Next, the report link), hand it back
+   to the canvas instead of letting it drop to the page */
+function closePanel() {
+  const panel = document.getElementById("panel");
+  const hadFocus = panel.contains(document.activeElement);
+  panel.classList.remove("open");
+  panel.inert = true;
+  setMargins(NO_MARGINS);
+  if (hadFocus && viewer && viewer.canvas) viewer.canvas.focus();
 }
 
 function renderText(t) {
@@ -343,22 +412,56 @@ function step(delta) {
   pos = Math.max(0, Math.min(D.n - 1, pos));
   const id = readOrder[pos];
   select(id);
-  panTo(id);
+  centreOn(id);
 }
 
-function panTo(id) {
-  const vp = tiledImage.imageToViewportCoordinates(
-    new OpenSeadragon.Point(D.x[id], D.y[id]));
-  viewer.viewport.panTo(vp);
+/* centre a dot (or the origin, id -1) in the part of the stage the visitor can see: beside the
+   side panel, or above the phone's bottom sheet (see setMargins). zoom, when given, is in
+   whole-stage terms, so a deep link shows the dots at the same size with or without the panel */
+function centreOn(id, zoom) {
+  if (!tiledImage || !D) return;
+  const vp = viewer.viewport;
+  const p = id === -1 ? D.origin : [D.x[id], D.y[id]];
+  if (!p) return;
+  if (zoom) {
+    const w = vp.getContainerSize().x;
+    vp.zoomTo(zoom * w / Math.max(1, w - margins.left - margins.right), null, reduceMotion);
+  }
+  vp.panTo(tiledImage.imageToViewportCoordinates(new OpenSeadragon.Point(p[0], p[1])), reduceMotion);
+  vp.applyConstraints(reduceMotion);
 }
 
 /* fly to a dot: zoom in and centre it (used by deep-links) */
 function goToDot(id) {
-  const vp = tiledImage.imageToViewportCoordinates(
-    new OpenSeadragon.Point(D.x[id], D.y[id]));
-  viewer.viewport.zoomTo(LINK_ZOOM);
-  viewer.viewport.panTo(vp);
-  viewer.viewport.applyConstraints();
+  centreOn(id, LINK_ZOOM);
+}
+
+/* While the comment panel is open, OpenSeadragon is told the strip under it is covered
+   (viewport margins), so it centres and constrains the canvas to the uncovered area: a selected dot
+   is centred where it can be seen, even one at the canvas's edge. Changing the margins keeps the
+   picture exactly where it is on screen; only a following centreOn() moves it. */
+const NO_MARGINS = { left: 0, top: 0, right: 0, bottom: 0 };
+let margins = NO_MARGINS;
+
+function panelMargins() {
+  const panel = document.getElementById("panel");
+  if (!panel.classList.contains("open")) return NO_MARGINS;
+  // layout sizes, not the sliding transform: phones get a bottom sheet, wider screens a side panel
+  return panel.offsetTop > 0
+    ? { left: 0, top: 0, right: 0, bottom: panel.offsetHeight }
+    : { left: 0, top: 0, right: panel.offsetWidth, bottom: 0 };
+}
+
+function setMargins(m) {
+  if (!viewer || !viewer.viewport) return;
+  if (m.left === margins.left && m.top === margins.top &&
+      m.right === margins.right && m.bottom === margins.bottom) return;   // don't stop a fly-to
+  const vp = viewer.viewport, size = vp.getContainerSize();
+  const tl = vp.pointFromPixel(new OpenSeadragon.Point(m.left, m.top), true);
+  const br = vp.pointFromPixel(new OpenSeadragon.Point(size.x - m.right, size.y - m.bottom), true);
+  vp.setMargins(m);
+  vp.fitBounds(new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y), true);
+  margins = m;
 }
 
 /* ---------- overlay drawing ---------- */
@@ -412,7 +515,7 @@ function wireControls() {
   document.getElementById("p-prev").onclick = () => step(-1);
   document.getElementById("p-next").onclick = () => step(1);
   document.getElementById("p-close").onclick = () => {
-    document.getElementById("panel").classList.remove("open");
+    closePanel();
     selected = -2; draw();
   };
 }
