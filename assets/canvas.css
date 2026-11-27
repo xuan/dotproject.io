@@ -75,6 +75,9 @@ body {
 /* OpenSeadragon forces position:relative on its container, so size it explicitly. */
 #osd { position: absolute; inset: 0; width: 100%; height: 100%; background: #fafafa; }
 #osd .openseadragon-canvas:focus { outline: none; }
+/* OpenSeadragon's own failure text ("Unable to open [object Object]: HTTP 0 …") is for developers;
+   .cv-error says what happened in plain words */
+#osd .openseadragon-message { display: none !important; }   /* it sets display: table inline */
 /* keyboard focus on the canvas: a black-and-white ring just inside the stage, drawn above the
    tiles (OpenSeadragon's own canvas would cover an outline) and below the controls and panel.
    Keyed to .cv.kbd (set by canvas.js on key presses), not :focus-visible: OpenSeadragon focuses its
@@ -142,12 +145,14 @@ body {
 .cv-cat .sw { width: 11px; height: 11px; border-radius: 50%; }
 .cv-cat.origin { color: #111; } .cv-cat.origin .sw { background: #111; }
 .cv-pos { font-size: 0.78rem; letter-spacing: 0.03em; color: var(--muted); font-variant-numeric: tabular-nums; }
+/* 44 × 44 hit area; the negative margins keep the × where it always sat */
 .cv-close {
   border: none; background: none; font-size: 1.5rem; line-height: 1; color: var(--muted);
-  cursor: pointer; padding: 0 4px;
+  cursor: pointer; padding: 0; width: 44px; height: 44px; margin: -12px -12px -12px 0;
+  display: flex; align-items: center; justify-content: center; flex: 0 0 auto;
 }
 .cv-close:hover { color: var(--fg); }
-.cv-body { padding: 4px 18px 18px; overflow-y: auto; }
+.cv-body { padding: 4px 18px 18px; overflow-y: auto; min-height: 0; }
 .cv-text { font-size: 1.05rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .cv-nav { display: flex; gap: 8px; padding: 12px 18px 18px; border-top: 1px solid #f0f0f0; }
 .cv-nav button {
@@ -173,6 +178,24 @@ body {
 }
 .cv-loading.hide { opacity: 0; pointer-events: none; }
 
+/* load failure: a plain message at the top of the stage, with a retry and a way out */
+.cv-error {
+  position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 10;
+  width: min(440px, calc(100% - 28px)); padding: 14px 16px;
+  background: #fff; border: 1px solid #ececec; border-radius: 12px;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.12);
+}
+.cv-error[hidden] { display: none; }
+.cv-error p { margin: 0; font-size: 0.92rem; line-height: 1.45; }
+.cv-error-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
+.cv-error-actions button {
+  font: inherit; font-size: 0.85rem; padding: 8px 14px; cursor: pointer;
+  border: 1px solid var(--fg); border-radius: 9px; background: var(--fg); color: #fff;
+}
+.cv-error-actions button:hover { opacity: 0.85; }
+.cv-error-actions a { font-size: 0.85rem; color: var(--muted); }
+.cv-error-actions a:hover { color: var(--fg); }
+
 @media (max-width: 640px) {
   .cv-sub { display: none; }
   .cv-head { gap: 12px; padding: 10px 12px; }
@@ -181,21 +204,30 @@ body {
   .cv-info { gap: 12px; padding: 7px 12px; }
   .cv-info-name { display: none; }
   .cv-counts { gap: 12px; }
-  .cv-counts .t-red dt, .cv-counts .t-blue dt { font-size: 0; }
+  /* the words "Red" / "Blue" leave the screen but stay with screen readers (same as .sr-only) */
+  .cv-counts .cv-word {
+    position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+    clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+  }
   .cv-counts .t-red dt::before, .cv-counts .t-blue dt::before { margin-right: 0; }
   .cv-buy { padding: 6px 11px; font-size: 0.8rem; }
   .cv-search input { font-size: 1rem; }      /* 16px: stops iOS zooming in on focus */
+  /* bottom sheet, as tall as the comment needs (long ones scroll inside, up to 62% of the screen);
+     canvas.js keeps --sheet-h = its height, and the viewport margins, in step */
   .cv-panel {
-    width: 100%; max-width: 100%; top: auto; height: 62vh;
+    width: 100%; max-width: 100%; top: auto; height: auto; max-height: 62vh;
     border-left: none; border-top: 1px solid #ececec; border-radius: 16px 16px 0 0;
     transform: translateY(100%); box-shadow: 0 -8px 30px rgba(0,0,0,0.12);
   }
   .cv-panel.open { transform: translateY(0); }
-  .cv-tools { bottom: 10px; left: 10px; }
-  /* the panel is a bottom sheet here: keep both arrows at the sides, above the sheet */
+  .cv-tools { bottom: 10px; left: 10px; transition: bottom 0.26s ease; }
+  /* with the sheet open: the zoom buttons ride above it in a row, both arrows sit at the middle of
+     the canvas still showing, and the "Canvas N of M" pill steps aside (the sheet names the canvas) */
+  .cv:has(.cv-panel.open) .cv-tools { flex-direction: row; bottom: calc(var(--sheet-h, 62vh) + 10px); }
+  .cv:has(.cv-panel.open) .cv-which { opacity: 0; }
   .cv:has(.cv-panel.open) .cv-stage-wrap .cv-next { right: 14px; }
-  .cv:has(.cv-panel.open) .cv-stage-wrap .car-arrow { top: calc(19vh - 22px); }
+  .cv:has(.cv-panel.open) .cv-stage-wrap .car-arrow { top: calc((100% - var(--sheet-h, 62vh)) / 2 - 22px); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .cv-panel, #osd, .cv-which { transition: none; }
+  .cv-panel, #osd, .cv-which, .cv-tools { transition: none; }
 }

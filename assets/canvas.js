@@ -114,11 +114,14 @@ function init() {
       viewer.viewport.applyConstraints(true);
     }
     if (slideIn) finishSlide();
+    if (loadError === "canvas") hideError();
   });
+  viewer.addHandler("open-failed", () => showError("canvas"));
+  viewer.addHandler("animation-finish", () => { flyZoom = null; });
   viewer.addHandler("animation", draw);
   viewer.addHandler("update-viewport", draw);
   // a resize can change the panel's size, or swap the side panel for the phone sheet
-  viewer.addHandler("resize", () => { setMargins(panelMargins()); resizeOverlay(); draw(); });
+  viewer.addHandler("resize", () => { syncPanel(); resizeOverlay(); draw(); });
   viewer.addHandler("canvas-click", onClick);
   window.addEventListener("resize", () => { resizeOverlay(); draw(); });
   window.addEventListener("keydown", onKey, true);   // capture: beat OSD's own arrow-key panning
@@ -142,6 +145,7 @@ function switchCanvas(c) {
   const dir = c > canvas ? 1 : -1;
   canvas = c;
   BASE = "images/canvas" + c + "/";
+  hideError();
   closePanel();
   selected = -2; pendingDot = null;
   D = null; TEXTS = null; buckets = null; tiledImage = null;
@@ -189,18 +193,62 @@ function updateSwitcher() {
 /* ---------- data ---------- */
 function loadData() {
   const seq = ++loadSeq;
-  fetch(BASE + "dots.json").then(r => r.json()).then(d => {
+  const get = (file) => fetch(BASE + file).then(r => {
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    return r.json();
+  });
+  textsFailed = false;
+  if (!D) get("dots.json").then(d => {
     if (seq !== loadSeq) return;
     D = d;
     buildIndex();
     draw();
     tryPending();
-  }).catch(() => {});
-  fetch(BASE + "texts.json").then(r => r.json()).then(t => {
+  }).catch(() => { if (seq === loadSeq) showError("data"); });
+  if (!TEXTS) get("texts.json").then(t => {
     if (seq !== loadSeq) return;
     TEXTS = t;
     if (selected >= 0) renderPanel(selected);   // fill in if a dot was opened early
-  }).catch(() => {});
+  }).catch(() => {
+    if (seq !== loadSeq) return;
+    textsFailed = true;
+    showError("data");
+    if (selected >= 0) renderPanel(selected);   // "didn't load" instead of "Loading…"
+  });
+}
+
+/* ---------- load failures ---------- */
+/* A plain message at the top of the stage instead of an endless "Loading…": what failed, and a
+   retry plus a way back to search. "canvas" = the tiles; "data" = the dot positions or the words. */
+let loadError = null;
+let textsFailed = false;
+
+function showError(kind) {
+  if (loadError === "canvas") kind = "canvas";   // keep the bigger failure on screen
+  loadError = kind;
+  document.getElementById("loading").classList.add("hide");
+  document.getElementById("cerror-msg").textContent = (kind === "canvas"
+    ? "Canvas " + canvas + " didn't load."
+    : "The comments for canvas " + canvas + " didn't load.") +
+    " Check your connection and try again.";
+  document.getElementById("cerror").hidden = false;
+}
+
+function hideError() {
+  loadError = null;
+  document.getElementById("cerror").hidden = true;
+}
+
+function retryLoad() {
+  const kind = loadError;
+  const hadFocus = document.getElementById("cerror").contains(document.activeElement);
+  hideError();
+  if (kind === "canvas") {
+    document.getElementById("loading").classList.remove("hide");
+    viewer.open(BASE + "canvas" + canvas + ".dzi");
+  }
+  if (!D || !TEXTS) loadData();
+  if (hadFocus) viewer.canvas.focus();           // the button just disappeared
 }
 
 function buildIndex() {
@@ -369,7 +417,8 @@ function renderPanel(id) {
     catEl.textContent = "Canvas " + canvas + " \u00b7 Dot " + (orderPos[id] + 1).toLocaleString() +
       " of " + D.n.toLocaleString();
     noteEl.hidden = true;
-    textEl.innerHTML = TEXTS ? renderText(TEXTS[id]) : "Loading…";
+    textEl.innerHTML = TEXTS ? renderText(TEXTS[id])
+      : textsFailed ? "This comment didn't load." : "Loading…";
     nav.hidden = false;
     const href = D.ci ? changeFormHref(canvas, id, D.ci[id]) : "";
     report.hidden = !href;
@@ -378,7 +427,7 @@ function renderPanel(id) {
   // screen readers hear the position and the words (the panel is inert until it opens)
   document.getElementById("p-live").textContent = id === -1
     ? "The first Jane Doe. " + noteEl.textContent
-    : catEl.textContent + ". " + (TEXTS ? TEXTS[id] : "Loading.");
+    : catEl.textContent + ". " + (TEXTS ? TEXTS[id] : textsFailed ? "This comment didn't load." : "Loading.");
   openPanel();
 }
 
@@ -386,7 +435,16 @@ function openPanel() {
   const panel = document.getElementById("panel");
   panel.inert = false;
   panel.classList.add("open");
-  setMargins(panelMargins());
+  syncPanel();
+}
+
+/* after the panel opens, or its content or size changes (the phone sheet is as tall as the
+   comment): keep --sheet-h (canvas.css) and the viewport margins in step, and if the visible area
+   moved, re-centre the open dot, resuming a deep link's zoom if one was still flying */
+function syncPanel() {
+  const panel = document.getElementById("panel");
+  document.querySelector(".cv").style.setProperty("--sheet-h", panel.offsetHeight + "px");
+  if (setMargins(panelMargins()) && selected !== -2) centreOn(selected, flyZoom);
 }
 
 /* close the panel; if focus was inside it (Close, Previous / Next, the report link), hand it back
@@ -423,6 +481,7 @@ function centreOn(id, zoom) {
   const vp = viewer.viewport;
   const p = id === -1 ? D.origin : [D.x[id], D.y[id]];
   if (!p) return;
+  flyZoom = zoom || null;                  // remembered until the animation finishes (syncPanel)
   if (zoom) {
     const w = vp.getContainerSize().x;
     vp.zoomTo(zoom * w / Math.max(1, w - margins.left - margins.right), null, reduceMotion);
@@ -452,16 +511,20 @@ function panelMargins() {
     : { left: 0, top: 0, right: panel.offsetWidth, bottom: 0 };
 }
 
+let flyZoom = null;                        // a deep link's zoom while it is still animating
+
+/* returns true when the margins changed */
 function setMargins(m) {
-  if (!viewer || !viewer.viewport) return;
+  if (!viewer || !viewer.viewport) return false;
   if (m.left === margins.left && m.top === margins.top &&
-      m.right === margins.right && m.bottom === margins.bottom) return;   // don't stop a fly-to
+      m.right === margins.right && m.bottom === margins.bottom) return false;   // don't stop a fly-to
   const vp = viewer.viewport, size = vp.getContainerSize();
   const tl = vp.pointFromPixel(new OpenSeadragon.Point(m.left, m.top), true);
   const br = vp.pointFromPixel(new OpenSeadragon.Point(size.x - m.right, size.y - m.bottom), true);
   vp.setMargins(m);
   vp.fitBounds(new OpenSeadragon.Rect(tl.x, tl.y, br.x - tl.x, br.y - tl.y), true);
   margins = m;
+  return true;
 }
 
 /* ---------- overlay drawing ---------- */
@@ -510,6 +573,7 @@ function wireControls() {
   document.getElementById("zin").onclick = () => viewer.viewport.zoomBy(2).applyConstraints();
   document.getElementById("zout").onclick = () => viewer.viewport.zoomBy(0.5).applyConstraints();
   document.getElementById("zhome").onclick = () => viewer.viewport.goHome();
+  document.getElementById("cerror-retry").onclick = retryLoad;
   document.getElementById("cprev").onclick = () => switchCanvas(canvas - 1);
   document.getElementById("cnext").onclick = () => switchCanvas(canvas + 1);
   document.getElementById("p-prev").onclick = () => step(-1);
