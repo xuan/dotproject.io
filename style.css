@@ -5,7 +5,8 @@
   --fg: #111111;              /* text, primary buttons, focus rings */
   --muted: #6b6b6b;           /* secondary text: 5.3:1 on --bg, 5.1:1 on --surface (WCAG AA) */
   --line: #ececec;            /* hairline dividers */
-  --edge: #d9d9d9;            /* borders of inputs, buttons and arrows */
+  --edge: #d9d9d9;            /* borders of buttons and arrows (their labels identify them) */
+  --field: #8f8f8f;           /* borders of text fields: 3.2:1 on --bg, so the box can be found (WCAG 1.4.11) */
   --mark: #ffe9a8;            /* search-match highlight, deliberately neither red nor blue */
   /* The dot colours carry the project's meaning (red: under 18, or abused by a family member;
      blue: 18 or older). Use them for that meaning and the landing wordmark only, never as decoration. */
@@ -15,6 +16,23 @@
 
 * {
   box-sizing: border-box;
+}
+
+/* the hidden attribute always wins: a display rule (.more, .cv-nav, …) must never re-show
+   something the scripts have hidden */
+[hidden] {
+  display: none !important;
+}
+
+/* browser surfaces in the site's own colours, not the browser's blue (blue means 18+ here) */
+:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: var(--edge);
+  color: var(--fg);
 }
 
 /* redaction tokens ([name], [handle], ...) inside a survivor's words: set apart, still readable */
@@ -60,8 +78,11 @@ body {
   text-rendering: optimizeLegibility;
 }
 
+/* width: 100% pins main to the page: sized to its content, the carousel's minimum width (three
+   slides plus gaps, ~269px) widened it past a 320px phone's 256px and the page scrolled sideways */
 main {
   flex: 1 1 auto;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -116,7 +137,7 @@ main {
   font: inherit;
   font-size: 1rem;
   padding: 13px 15px;
-  border: 1px solid var(--edge);
+  border: 1px solid var(--field);
   border-radius: 10px;
   background: var(--bg);
   color: var(--fg);
@@ -169,6 +190,24 @@ main {
 
 .totals dl > div + div {
   border-left: 1px solid var(--line);
+}
+
+/* At large text sizes on narrow screens the three counts can't share a row: stack them. The
+   threshold is in em, so it scales with the text (3 columns need ~11em; 320px phones at normal
+   text size keep the row). */
+.totals {
+  container-type: inline-size;
+}
+
+@container (max-width: 11.5em) {
+  .totals dl {
+    grid-template-columns: 1fr;
+    row-gap: 0.6rem;
+  }
+
+  .totals dl > div + div {
+    border-left: 0;
+  }
 }
 
 .totals dt {

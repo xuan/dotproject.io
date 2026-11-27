@@ -5,14 +5,16 @@
    and flies to dot N (used by the search page's "find this dot" links). Esc resets the view.
    The side arrows (shown on hover, like the landing page) switch canvases in place. */
 
-const CANVAS_COUNT = 3;
-/* "Request a change" link in the dot panel → owner's Google Form, prefilled with
-   canvas, dot index (?dot= value) and comment index (ci into comments.json).
-   Keep in sync with CHANGE_FORM in comments.js. The link stays hidden while url is "". */
-const CHANGE_FORM = {
-  url: "https://docs.google.com/forms/d/e/1FAIpQLSd-dLZonVQzHA44ixR2Yg-7XvNwHKt8mBlhTzfrZzzIpOtpcQ/viewform",
-  canvas: "entry.647534290", dot: "entry.178890866", ci: "entry.545841760",
-};
+/* Everything about which canvases exist comes from the page (#site-data, _includes/site-data.html):
+   per-canvas counts from _data/canvases.json (build_site.py), print links from _data/prints.yml, and
+   the change form from _data/change_form.yml. Adding a canvas needs no edit here. */
+const SITE = (() => {
+  try { return JSON.parse(document.getElementById("site-data").textContent); } catch (e) { return {}; }
+})();
+const CANVAS_COUNT = Math.max(1, ...(SITE.canvases || []).map(r => r.canvas));
+/* "Is this your comment?" link in the dot panel → owner's Google Form, prefilled with canvas, dot
+   index (?dot= value) and comment index (ci into comments.json). Hidden while its url is "". */
+const CHANGE_FORM = SITE.changeForm || { url: "" };
 function changeFormHref(c, dot, ci) {
   if (!CHANGE_FORM.url) return "";
   const q = new URLSearchParams({ usp: "pp_url" });
@@ -25,14 +27,11 @@ let canvas = (() => {
 })();
 let BASE = "images/canvas" + canvas + "/";
 
-/* the bar under the header: the open canvas's red / blue / total dots (site.data.canvases, the
-   same counts as the landing page) and its "Buy a print" link (site.data.prints), embedded in
-   canvas.html as #canvas-info. Filled right away (no flash) and again on every canvas switch. */
-const INFO = (() => {
-  try { return JSON.parse(document.getElementById("canvas-info").textContent); } catch (e) { return null; }
-})();
+/* the bar under the header: the open canvas's red / blue / total dots (the same counts as the
+   landing page) and its "Buy a print" link, both from SITE. Filled right away (no flash) and again
+   on every canvas switch. */
 function updateInfo() {
-  const row = INFO && INFO.counts && INFO.counts.find(r => r.canvas === canvas);
+  const row = SITE.canvases && SITE.canvases.find(r => r.canvas === canvas);
   const bar = document.getElementById("cinfo");
   bar.hidden = !row;
   if (!row) return;
@@ -42,7 +41,7 @@ function updateInfo() {
   document.getElementById("i-blue").textContent = fmt(row.blue);
   document.getElementById("i-total").textContent = fmt(row.dots);
   const buy = document.getElementById("i-buy");
-  const url = INFO.prints && INFO.prints[String(canvas)];
+  const url = SITE.prints && SITE.prints[String(canvas)];
   buy.hidden = !url;
   if (url) {
     buy.href = url;

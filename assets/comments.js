@@ -16,12 +16,13 @@ let loaded = false;   // the whole of comments.json has arrived
 let failed = false;   // the download stopped (network); what arrived stays searchable
 let dotOf = null;     // comment index -> dot index on its canvas (-1 if it has no dot)
 let canvasOf = null;  // comment index -> canvas number (1, 2, ...)
-const CANVASES = [1, 2, 3];
-// Same Google Form as CHANGE_FORM in canvas.js (keep in sync); hidden while url is "".
-const CHANGE_FORM = {
-  url: "https://docs.google.com/forms/d/e/1FAIpQLSd-dLZonVQzHA44ixR2Yg-7XvNwHKt8mBlhTzfrZzzIpOtpcQ/viewform",
-  canvas: "entry.647534290", dot: "entry.178890866", ci: "entry.545841760",
-};
+// Which canvases exist and the change form both come from the page (#site-data,
+// _includes/site-data.html): _data/canvases.json and _data/change_form.yml. Nothing to edit here.
+const SITE = (() => {
+  try { return JSON.parse(document.getElementById("site-data").textContent); } catch (e) { return {}; }
+})();
+const CANVASES = (SITE.canvases || []).map((r) => r.canvas);
+const CHANGE_FORM = SITE.changeForm || { url: "" };   // "Request a change" is hidden while url is ""
 function changeFormHref(c, dot, ci) {
   if (!CHANGE_FORM.url) return "";
   const q = new URLSearchParams({ usp: "pp_url" });
@@ -47,7 +48,7 @@ function highlight(text, q) {
 function updateCount() {
   if (loaded) countEl.textContent = fmt(matches.length) + " of " + fmt(DATA.length);
   else if (failed) countEl.textContent = fmt(matches.length) + " in the first " + fmt(DATA.length);
-  else if (!DATA.length) countEl.textContent = "loading…";
+  else if (!DATA.length) countEl.textContent = "";   // the status line says "Loading comments…"
   else if (query) countEl.textContent = fmt(matches.length) + " found in the first " + fmt(DATA.length) + "…";
   else countEl.textContent = fmt(DATA.length) + " loaded…";
 }
@@ -62,7 +63,7 @@ function updateStatus() {
       : "The comments didn't load. Check your connection and try again.";
   } else if (matches.length === 0) {
     statusEl.hidden = false;
-    statusEl.textContent = loaded ? "No comments match." : (query ? "Searching…" : "Loading comments…");
+    statusEl.textContent = loaded ? "No comments match. Try fewer or different words." : (query ? "Searching…" : "Loading comments…");
   } else {
     statusEl.hidden = true;
   }

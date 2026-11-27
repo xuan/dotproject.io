@@ -1,0 +1,4 @@
+<!-- the one place the scripts learn which canvases exist and how to reach the change form:
+     canvases = _data/canvases.json (written by build_site.py), prints = _data/prints.yml,
+     changeForm = _data/change_form.yml. Read by assets/canvas.js and assets/comments.js. -->
+<script type="application/json" id="site-data">{"canvases": {{ site.data.canvases.canvases | jsonify }}, "prints": {{ site.data.prints | jsonify }}, "changeForm": {{ site.data.change_form | jsonify }}}</script>

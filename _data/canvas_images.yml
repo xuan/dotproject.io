@@ -1,0 +1,7 @@
+# Pixel size [width, height] of each canvas's published image (the same as w / h in
+# images/canvasN/dots.json). The landing carousel uses it for its width / height attributes, so the
+# page doesn't jump while the images load. Add a line when a canvas is added; the carousel slide
+# itself comes from _data/canvases.json (written by build_site.py).
+"1": [3775, 5088]
+"2": [3766, 5023]
+"3": [3731, 4955]

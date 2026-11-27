@@ -10,7 +10,7 @@ scripts:
   <p class="tagline">Search for your comment, or open the canvas to browse them all.</p>
   <form class="search" action="{{ '/comments.html' | relative_url }}" method="get" role="search">
     <input id="q" name="q" type="search" autocomplete="off" spellcheck="false"
-           placeholder="Search for a line you remember writing…"
+           placeholder="A line you remember…"
            aria-label="Search for your comment" />
     <button type="submit">Search for your comment</button>
   </form>
@@ -30,45 +30,28 @@ scripts:
   <figure class="reveal">
     <div class="carousel" data-carousel>
       <div class="car-track" tabindex="0" role="region" aria-label="The canvases — scroll sideways for more">
-        <a class="canvas-link car-slide" href="{{ '/canvas.html' | relative_url }}" aria-label="Open canvas 1">
+        {%- comment -%} one slide per canvas in _data/canvases.json (build_site.py); image sizes from
+        _data/canvas_images.yml. Canvas 1 is above the fold, so it loads first. {%- endcomment -%}
+        {%- for row in t.canvases %}
+        {%- assign n = row.canvas %}
+        {%- assign key = n | append: "" %}
+        {%- assign size = site.data.canvas_images[key] %}
+        {%- assign img = "/images/canvas" | append: n | append: "/canvas" | append: n %}
+        {%- if n == 1 %}{% assign href = "/canvas.html" %}{% else %}{% assign href = "/canvas.html?c=" | append: n %}{% endif %}
+        <a class="canvas-link car-slide" href="{{ href | relative_url }}" aria-label="Open canvas {{ n }}">
           <img
-          src="{{ '/images/canvas1/canvas1-960.jpg' | relative_url }}"
-          srcset="{{ '/images/canvas1/canvas1-480.jpg' | relative_url }} 480w,
-                  {{ '/images/canvas1/canvas1-720.jpg' | relative_url }} 720w,
-                  {{ '/images/canvas1/canvas1-960.jpg' | relative_url }} 960w,
-                  {{ '/images/canvas1/canvas1-1440.jpg' | relative_url }} 1440w"
+          src="{{ img | append: '-960.jpg' | relative_url }}"
+          srcset="{{ img | append: '-480.jpg' | relative_url }} 480w,
+                  {{ img | append: '-720.jpg' | relative_url }} 720w,
+                  {{ img | append: '-960.jpg' | relative_url }} 960w,
+                  {{ img | append: '-1440.jpg' | relative_url }} 1440w"
           sizes="(max-width: 500px) calc(100vw - 64px), 440px"
-          width="3775" height="5088"
-          loading="eager" fetchpriority="high" decoding="async"
-          alt="Dot Project — canvas 1" />
-          <span class="canvas-cta">Open canvas 1 →</span>
+          width="{{ size[0] | default: 3750 }}" height="{{ size[1] | default: 5000 }}"
+          {% if forloop.first %}loading="eager" fetchpriority="high"{% else %}loading="lazy"{% endif %} decoding="async"
+          alt="Dot Project — canvas {{ n }}" />
+          <span class="canvas-cta">Open canvas {{ n }} →</span>
         </a>
-        <a class="canvas-link car-slide" href="{{ '/canvas.html?c=2' | relative_url }}" aria-label="Open canvas 2">
-          <img
-          src="{{ '/images/canvas2/canvas2-960.jpg' | relative_url }}"
-          srcset="{{ '/images/canvas2/canvas2-480.jpg' | relative_url }} 480w,
-                  {{ '/images/canvas2/canvas2-720.jpg' | relative_url }} 720w,
-                  {{ '/images/canvas2/canvas2-960.jpg' | relative_url }} 960w,
-                  {{ '/images/canvas2/canvas2-1440.jpg' | relative_url }} 1440w"
-          sizes="(max-width: 500px) calc(100vw - 64px), 440px"
-          width="3766" height="5023"
-          loading="lazy" decoding="async"
-          alt="Dot Project — canvas 2" />
-          <span class="canvas-cta">Open canvas 2 →</span>
-        </a>
-        <a class="canvas-link car-slide" href="{{ '/canvas.html?c=3' | relative_url }}" aria-label="Open canvas 3">
-          <img
-          src="{{ '/images/canvas3/canvas3-960.jpg' | relative_url }}"
-          srcset="{{ '/images/canvas3/canvas3-480.jpg' | relative_url }} 480w,
-                  {{ '/images/canvas3/canvas3-720.jpg' | relative_url }} 720w,
-                  {{ '/images/canvas3/canvas3-960.jpg' | relative_url }} 960w,
-                  {{ '/images/canvas3/canvas3-1440.jpg' | relative_url }} 1440w"
-          sizes="(max-width: 500px) calc(100vw - 64px), 440px"
-          width="3731" height="4955"
-          loading="lazy" decoding="async"
-          alt="Dot Project — canvas 3" />
-          <span class="canvas-cta">Open canvas 3 →</span>
-        </a>
+        {%- endfor %}
       </div>
       <button class="car-arrow car-prev" type="button" aria-label="Previous canvas">&#8249;</button>
       <button class="car-arrow car-next" type="button" aria-label="Next canvas">&#8250;</button>

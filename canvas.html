@@ -16,7 +16,7 @@ scripts:
     <p class="cv-sub">Every dot is a survivor. Zoom in and tap a dot to read their words.</p>
     <form class="cv-search" action="{{ '/comments.html' | relative_url }}" method="get" role="search">
       <input name="q" type="search" autocomplete="off" spellcheck="false"
-             placeholder="Search for your comment…" aria-label="Search for your comment" />
+             placeholder="A line you remember…" aria-label="Search for your comment" />
       <button type="submit">Search</button>
     </form>
   </header>
@@ -32,9 +32,9 @@ scripts:
     </dl>
     <a class="cv-buy" id="i-buy" target="_blank" rel="noopener" hidden>Buy a print</a>
   </div>
-  <script type="application/json" id="canvas-info">{"counts": {{ site.data.canvases.canvases | jsonify }}, "prints": {{ site.data.prints | jsonify }}}</script>
+  {% include site-data.html %}
 
-  <div class="cv-stage-wrap">
+  <main class="cv-stage-wrap">
     <div id="osd"></div>
 
     <!-- shown when the canvas or its comments fail to load (canvas.js showError) -->
@@ -79,5 +79,5 @@ scripts:
       <button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button>
       <button id="zhome" title="Reset view (Esc)" aria-label="Reset view">&#9678;</button>
     </div>
-  </div>
+  </main>
 </div>
