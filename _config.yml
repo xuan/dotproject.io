@@ -11,6 +11,9 @@ encoding: "utf-8"
 exclude:
   - README.md
   - CLAUDE.md
+  # Impeccable design context (product + design notes, not site pages)
+  - PRODUCT.md
+  - DESIGN.md
   - Gemfile
   - Gemfile.lock
   - vendor
