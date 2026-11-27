@@ -46,7 +46,8 @@ Each page carries YAML front matter (`layout: default`, `title`, `description`, 
 
 ```text
 _config.yml               site config: title, url, baseurl "", exclude list (docs, masters)
-_layouts/default.html     page shell: <head> (meta, icons, link previews), style.css, per-page styles/scripts
+_layouts/default.html     page shell: <head> (meta, icons, link previews), style.css, per-page styles/scripts,
+                            the analytics beacon (live build only)
 _includes/site-data.html  #site-data JSON (canvases, prints, change form) read by canvas.js and comments.js
 _data/canvases.json       dot counts, all canvases and per canvas; written by build_site.py, never by hand
 _data/canvas_images.yml   [width, height] of each canvas's published image (carousel img attributes)
@@ -281,6 +282,24 @@ dot on canvases 1–2 changed.
 
 **Don't regenerate `comments.json` with `ig-comments/tools/export_site_comments.py`.** That is the
 old, unreviewed export; it renumbers every comment and breaks every dot's `ci`.
+
+## Analytics
+
+**Cloudflare Web Analytics** (owner, 2026-11-27) counts visits. The numbers are in the Cloudflare
+dashboard under Web Analytics. The DNS records are grey-cloud, so the beacon is the snippet in
+`_layouts/default.html`, not Cloudflare's automatic injection.
+
+- **Live build only.** The snippet sits inside `{% if jekyll.environment == "production" %}`. The
+  Pages builder sets `JEKYLL_ENV=production`, and local `jekyll serve` / `build` don't, so previews
+  aren't counted. `JEKYLL_ENV=production bundle exec jekyll build` shows what ships.
+- **No search text leaves the browser.** The beacon (checked at version 2026.10.1) strips the query
+  and `#` part from the page URL and the referrer before sending. Cloudflare gets `/comments.html`,
+  never `?q=…`, and it sets no cookies or storage. Re-check this before ever making the URL carry
+  something new.
+- **`"spa": false`** in `data-cf-beacon`: a page view is a real page load. The default would count
+  every `history.replaceState` (the viewer's `?c=N` switch) as another view of `/canvas.html`.
+- **The token is public** by design (it is in every page's source); it only identifies the site.
+- Ad blockers and privacy browsers block the beacon, so the counts are a floor.
 
 ## Change requests (fix my comment / wrong colour)
 

@@ -36,5 +36,10 @@
     {%- for script in page.scripts %}
     <script src="{{ script | relative_url }}{% unless script contains '://' %}?v={{ v }}{% endunless %}" defer></script>
     {%- endfor %}
+    {%- if jekyll.environment == "production" %}
+    <!-- Cloudflare Web Analytics (live build only): no cookies; the beacon drops the ?query
+         (search text) before sending. spa:false counts page loads, not the viewer's ?c=N switches. -->
+    <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "5e0ff5e3fa1245bf897e57ff9f22b8e2", "spa": false}'></script>
+    {%- endif %}
   </body>
 </html>

@@ -100,7 +100,9 @@ design default:
 
 - whether the canvas and search pages stay out of search engines (`noindex` today) after launch;
 - support resources such as crisis lines (none exist; not adopted as a rule);
-- analytics (none today; not adopted as a rule);
+- analytics: Cloudflare Web Analytics since 2026-11-27 (owner's choice): no cookies, and no search
+  text is sent (see CLAUDE.md, Analytics). Which tool, and whether to keep one, stays the owner's
+  call;
 - who is credited as the project's owner beyond Elise Khong as the artist;
 - whether the first Jane Doe is named or described beyond the origin dot's current copy.
 
