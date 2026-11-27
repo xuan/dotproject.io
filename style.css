@@ -1,8 +1,16 @@
+/* The site's whole palette. Pages and assets/*.css use these names, never raw values. */
 :root {
-  --bg: #ffffff;
-  --fg: #111111;
-  --muted: #6b6b6b;           /* 5.3:1 on white, 5.1:1 on the viewer's #fafafa (WCAG AA) */
-  --accent: #111111;
+  --bg: #ffffff;              /* paper, and text on black buttons */
+  --surface: #fafafa;         /* the viewer's stage behind the canvas */
+  --fg: #111111;              /* text, primary buttons, focus rings */
+  --muted: #6b6b6b;           /* secondary text: 5.3:1 on --bg, 5.1:1 on --surface (WCAG AA) */
+  --line: #ececec;            /* hairline dividers */
+  --edge: #d9d9d9;            /* borders of inputs, buttons and arrows */
+  --mark: #ffe9a8;            /* search-match highlight, deliberately neither red nor blue */
+  /* The dot colours carry the project's meaning (red: under 18, or abused by a family member;
+     blue: 18 or older). Use them for that meaning and the landing wordmark only, never as decoration. */
+  --red: #d6283b;
+  --blue: #1f50d0;
 }
 
 * {
@@ -69,16 +77,12 @@ main {
   line-height: 1;
 }
 
-.wordmark .dot {
-  color: #d6283b;
-}
-
 .wordmark .o-red {
-  color: #d6283b;
+  color: var(--red);
 }
 
 .wordmark .o-blue {
-  color: #1f50d0;
+  color: var(--blue);
 }
 
 .tagline {
@@ -112,9 +116,9 @@ main {
   font: inherit;
   font-size: 1rem;
   padding: 13px 15px;
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--edge);
   border-radius: 10px;
-  background: #fff;
+  background: var(--bg);
   color: var(--fg);
   outline: none;
   text-align: center;
@@ -135,7 +139,7 @@ main {
   border: 1px solid var(--fg);
   border-radius: 10px;
   background: var(--fg);
-  color: #fff;
+  color: var(--bg);
   cursor: pointer;
 }
 
@@ -164,7 +168,7 @@ main {
 }
 
 .totals dl > div + div {
-  border-left: 1px solid #ececec;
+  border-left: 1px solid var(--line);
 }
 
 .totals dt {
@@ -184,11 +188,11 @@ main {
 }
 
 .totals .t-red dt::before {
-  background: #d6283b;
+  background: var(--red);
 }
 
 .totals .t-blue dt::before {
-  background: #1f50d0;
+  background: var(--blue);
 }
 
 .totals .t-all dt::before {
@@ -317,7 +321,7 @@ main {
   line-height: 1;
   color: var(--fg);
   background: rgba(255, 255, 255, 0.92);
-  border: 1px solid #d9d9d9;
+  border: 1px solid var(--edge);
   border-radius: 50%;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.14);
   cursor: pointer;

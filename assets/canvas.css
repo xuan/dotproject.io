@@ -1,9 +1,6 @@
 /* Canvas viewer — full-bleed deep-zoom stage with a slide-in comment panel. */
 :root {
-  --under: #d6283b;   /* underage  (red)  */
-  --adult: #1f50d0;   /* adult     (blue) */
-  --family: #8c1d2e;  /* family / incest  */
-  --panelw: 380px;
+  --panelw: 380px;            /* colours: the shared tokens in style.css */
 }
 
 body {
@@ -20,7 +17,7 @@ body {
   flex: 0 0 auto;
   display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap;
   padding: 12px 16px;
-  border-bottom: 1px solid #ececec;
+  border-bottom: 1px solid var(--line);
   background: var(--bg);
   z-index: 6;
 }
@@ -34,13 +31,13 @@ body {
 }
 .cv-search input {
   flex: 1 1 auto; min-width: 0; font: inherit; font-size: 0.9rem; padding: 8px 12px;
-  border: 1px solid #d9d9d9; border-radius: 9px; background: #fff; color: var(--fg); outline: none;
+  border: 1px solid var(--edge); border-radius: 9px; background: var(--bg); color: var(--fg); outline: none;
 }
 .cv-search input::placeholder { color: var(--muted); }
 .cv-search input:focus { border-color: var(--fg); }
 .cv-search button {
   flex: 0 0 auto; font: inherit; font-size: 0.85rem; padding: 8px 14px; cursor: pointer;
-  border: 1px solid var(--fg); border-radius: 9px; background: var(--fg); color: #fff;
+  border: 1px solid var(--fg); border-radius: 9px; background: var(--fg); color: var(--bg);
 }
 .cv-search button:hover { opacity: 0.85; }
 
@@ -48,7 +45,7 @@ body {
 .cv-info {
   flex: 0 0 auto; z-index: 6;
   display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
-  padding: 8px 16px; border-bottom: 1px solid #ececec; background: var(--bg);
+  padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--bg);
 }
 .cv-info[hidden], .cv-buy[hidden] { display: none; }
 .cv-info-name { font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em; }
@@ -59,21 +56,21 @@ body {
   content: ""; display: inline-block; width: 9px; height: 9px; margin-right: 5px;
   border-radius: 50%; vertical-align: 0;
 }
-.cv-counts .t-red dt::before { background: var(--under); }
-.cv-counts .t-blue dt::before { background: var(--adult); }
+.cv-counts .t-red dt::before { background: var(--red); }
+.cv-counts .t-blue dt::before { background: var(--blue); }
 .cv-counts .t-all dt::before { display: none; }
 .cv-counts dd { margin: 0; font-size: 0.95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cv-buy {
   margin-left: auto; padding: 7px 14px; white-space: nowrap;
-  border: 1px solid var(--fg); border-radius: 9px; background: #fff; color: var(--fg);
+  border: 1px solid var(--fg); border-radius: 9px; background: var(--bg); color: var(--fg);
   font-size: 0.85rem; text-decoration: none;
 }
-.cv-buy:hover, .cv-buy:focus-visible { background: var(--fg); color: #fff; }
+.cv-buy:hover, .cv-buy:focus-visible { background: var(--fg); color: var(--bg); }
 
 /* stage */
 .cv-stage-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
 /* OpenSeadragon forces position:relative on its container, so size it explicitly. */
-#osd { position: absolute; inset: 0; width: 100%; height: 100%; background: #fafafa; }
+#osd { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--surface); }
 #osd .openseadragon-canvas:focus { outline: none; }
 /* OpenSeadragon's own failure text ("Unable to open [object Object]: HTTP 0 …") is for developers;
    .cv-error says what happened in plain words */
@@ -84,7 +81,7 @@ body {
    canvas from script on every click, which browsers count as visible focus */
 .cv.kbd .cv-stage-wrap:has(.openseadragon-canvas:focus)::after {
   content: ""; position: absolute; inset: 0; z-index: 6; pointer-events: none;
-  box-shadow: inset 0 0 0 2px var(--fg), inset 0 0 0 4px #fff;
+  box-shadow: inset 0 0 0 2px var(--fg), inset 0 0 0 4px var(--bg);
 }
 #dot-overlay { position: absolute; inset: 0; pointer-events: none; }
 
@@ -95,7 +92,7 @@ body {
 }
 .cv-tools button {
   width: 42px; height: 42px; font-size: 1.25rem; line-height: 1;
-  border: 1px solid #d9d9d9; border-radius: 10px; background: #fff; color: var(--fg);
+  border: 1px solid var(--edge); border-radius: 10px; background: var(--bg); color: var(--fg);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
 }
@@ -114,7 +111,7 @@ body {
 .cv-which {
   position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 7;
   padding: 6px 12px; border-radius: 999px; background: rgba(255,255,255,0.92);
-  border: 1px solid #e2e2e2; box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid var(--line); box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   font-size: 0.78rem; letter-spacing: 0.03em; color: var(--muted); font-variant-numeric: tabular-nums;
   pointer-events: none; opacity: 0; transition: opacity 0.2s ease;
 }
@@ -128,7 +125,7 @@ body {
 /* comment panel */
 .cv-panel {
   position: absolute; top: 0; right: 0; bottom: 0; width: var(--panelw); max-width: 92vw;
-  background: #fff; border-left: 1px solid #ececec; z-index: 8;
+  background: var(--bg); border-left: 1px solid var(--line); z-index: 8;
   box-shadow: -8px 0 30px rgba(0,0,0,0.10);
   transform: translateX(100%); transition: transform 0.26s ease;
   display: flex; flex-direction: column;
@@ -143,7 +140,7 @@ body {
   font-weight: 600; display: inline-flex; align-items: center; gap: 7px;
 }
 .cv-cat .sw { width: 11px; height: 11px; border-radius: 50%; }
-.cv-cat.origin { color: #111; } .cv-cat.origin .sw { background: #111; }
+.cv-cat.origin { color: var(--fg); } .cv-cat.origin .sw { background: var(--fg); }
 .cv-pos { font-size: 0.78rem; letter-spacing: 0.03em; color: var(--muted); font-variant-numeric: tabular-nums; }
 /* 44 × 44 hit area; the negative margins keep the × where it always sat */
 .cv-close {
@@ -154,10 +151,10 @@ body {
 .cv-close:hover { color: var(--fg); }
 .cv-body { padding: 4px 18px 18px; overflow-y: auto; min-height: 0; }
 .cv-text { font-size: 1.05rem; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
-.cv-nav { display: flex; gap: 8px; padding: 12px 18px 18px; border-top: 1px solid #f0f0f0; }
+.cv-nav { display: flex; gap: 8px; padding: 12px 18px 18px; border-top: 1px solid var(--line); }
 .cv-nav button {
   flex: 1; font: inherit; font-size: 0.85rem; padding: 10px; cursor: pointer;
-  border: 1px solid #d9d9d9; border-radius: 9px; background: #fff; color: var(--fg);
+  border: 1px solid var(--edge); border-radius: 9px; background: var(--bg); color: var(--fg);
 }
 .cv-nav button:hover { border-color: var(--fg); }
 .cv-report {
@@ -182,7 +179,7 @@ body {
 .cv-error {
   position: absolute; top: 14px; left: 50%; transform: translateX(-50%); z-index: 10;
   width: min(440px, calc(100% - 28px)); padding: 14px 16px;
-  background: #fff; border: 1px solid #ececec; border-radius: 12px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
   box-shadow: 0 6px 24px rgba(0,0,0,0.12);
 }
 .cv-error[hidden] { display: none; }
@@ -190,7 +187,7 @@ body {
 .cv-error-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
 .cv-error-actions button {
   font: inherit; font-size: 0.85rem; padding: 8px 14px; cursor: pointer;
-  border: 1px solid var(--fg); border-radius: 9px; background: var(--fg); color: #fff;
+  border: 1px solid var(--fg); border-radius: 9px; background: var(--fg); color: var(--bg);
 }
 .cv-error-actions button:hover { opacity: 0.85; }
 .cv-error-actions a { font-size: 0.85rem; color: var(--muted); }
@@ -216,7 +213,7 @@ body {
      canvas.js keeps --sheet-h = its height, and the viewport margins, in step */
   .cv-panel {
     width: 100%; max-width: 100%; top: auto; height: auto; max-height: 62vh;
-    border-left: none; border-top: 1px solid #ececec; border-radius: 16px 16px 0 0;
+    border-left: none; border-top: 1px solid var(--line); border-radius: 16px 16px 0 0;
     transform: translateY(100%); box-shadow: 0 -8px 30px rgba(0,0,0,0.12);
   }
   .cv-panel.open { transform: translateY(0); }

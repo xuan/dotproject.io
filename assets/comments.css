@@ -8,21 +8,22 @@ body { justify-content: flex-start; padding: 0; }
 .top a:hover { color: var(--fg); }
 .note { margin: 18px 0 22px; font-size: 0.85rem; line-height: 1.5; color: var(--muted); }
 .controls { position: sticky; top: 0; background: var(--bg); padding: 14px 0 12px;
-            border-bottom: 1px solid #ececec; z-index: 5; }
-#q { width: 100%; font-size: 1.05rem; padding: 12px 14px; border: 1px solid #d9d9d9;
-     border-radius: 10px; outline: none; color: var(--fg); background: #fff; }
+            border-bottom: 1px solid var(--line); z-index: 5; }
+#q { width: 100%; font-size: 1.05rem; padding: 12px 14px; border: 1px solid var(--edge);
+     border-radius: 10px; outline: none; color: var(--fg); background: var(--bg); }
 #q:focus { border-color: var(--fg); }
 .count { display: block; margin-top: 10px; font-size: 0.82rem; color: var(--muted); }
 ul.results { list-style: none; margin: 18px 0 0; padding: 0; }
-li.item { padding: 16px 0; border-bottom: 1px solid #f0f0f0; }
+li.item { padding: 16px 0; border-bottom: 1px solid var(--line); }
 li.item .text { font-size: 1rem; line-height: 1.55; white-space: pre-wrap; overflow-wrap: anywhere; }
-li.item .text mark { background: #ffe9a8; color: inherit; padding: 0 1px; border-radius: 2px; }
-li.item .loc { display: inline-block; margin-top: 9px; font-size: 0.82rem; color: var(--muted);
-               text-decoration: none; border-bottom: 1px solid #e3e3e3; padding-bottom: 1px; }
+li.item .text mark { background: var(--mark); color: inherit; padding: 0 1px; border-radius: 2px; }
+/* "Find this dot" and "Request a change": one row that wraps flush-left on narrow screens */
+li.item .locs { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 14px; margin-top: 9px; }
+li.item .loc { display: inline-block; font-size: 0.82rem; color: var(--muted);
+               text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 1px; }
 li.item .loc:hover { color: var(--fg); border-color: var(--fg); }
 .more { display: block; margin: 22px auto 0; font: inherit; font-size: 0.9rem;
-        padding: 10px 20px; border: 1px solid #d9d9d9; border-radius: 10px;
-        background: #fff; color: var(--fg); cursor: pointer; }
+        padding: 10px 20px; border: 1px solid var(--edge); border-radius: 10px;
+        background: var(--bg); color: var(--fg); cursor: pointer; }
 .more:hover { border-color: var(--fg); }
 .status { padding: 28px 0; color: var(--muted); font-size: 0.95rem; text-align: center; }
-li.item .loc.req { margin-left: 14px; }

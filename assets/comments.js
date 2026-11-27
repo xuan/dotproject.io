@@ -86,19 +86,22 @@ function item(ci) {
   li.className = "item";
   li.innerHTML = '<div class="text">' + highlight(DATA[ci].comment, query) + "</div>";
   if (dotOf && ci < dotOf.length && dotOf[ci] >= 0) {
+    const links = document.createElement("div");   // a wrapping row: the links line up on phones
+    links.className = "locs";
     const a = document.createElement("a");
     a.className = "loc";
     a.href = "canvas.html?c=" + canvasOf[ci] + "&dot=" + dotOf[ci];
     a.textContent = "Find this dot on canvas " + canvasOf[ci] + " →";
-    li.appendChild(a);
+    links.appendChild(a);
     const href = changeFormHref(canvasOf[ci], dotOf[ci], ci);
     if (href) {
       const r = document.createElement("a");
       r.className = "loc req";
       r.href = href; r.target = "_blank"; r.rel = "noopener";
       r.textContent = "Your comment? Request a change";
-      li.appendChild(r);
+      links.appendChild(r);
     }
+    li.appendChild(links);
   }
   return li;
 }
