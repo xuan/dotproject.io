@@ -55,6 +55,8 @@ assets/comments.js     client-side search over comments.json (+ "find this dot o
 assets/home.js         landing-page carousel arrows (the only script on the landing page)
 style.css              global styles (landing page + carousel + shared tokens in :root)
 comments.json          search data — ~10 MB, 49,148 reviewed records (tracked, served as-is)
+PRODUCT.md             product context for design work (users, purpose, care rules); excluded from the build
+.impeccable/           design-tool config (detector ignores, live-mode target); dot-folder, never built
 Gemfile                github-pages gem + webrick
 .ruby-version          3.3.13 (matches the Ruby GitHub Pages runs)
 CNAME                  dotproject.io
@@ -221,6 +223,16 @@ Two pages, one dataset, deliberately split so the heavy JSON never loads on the 
   "Canvas N of M" label. Switching happens in place: the old canvas slides out, `viewer.open()` loads
   the other DZI and its dots/texts (stale fetches are ignored), and the URL becomes `?c=N`
   (`history.replaceState`, so Back still leaves the viewer).
+- **Selecting a dot centres it in the part of the stage you can see.** While the panel is open,
+  `canvas.js` sets OpenSeadragon viewport margins for the strip under it (the side panel, or the phone
+  bottom sheet), so `centreOn()` centres, and the pan limits hold, in the uncovered area. Clicks / taps,
+  `?dot=` deep links, Previous / Next and Enter centre the dot; arrow keys recentre only near the visible
+  edge. Changing the margins never moves the picture (`setMargins` refits the same area).
+- **Keyboard:** Tab reaches the canvas (`role="application"`, with an aria-label saying how to use
+  it); Enter opens the dot nearest the centre, arrows move between dots, Escape closes and resets. The
+  panel is `inert` while closed, and focus returns to the canvas when it closes. Opened dots are
+  announced through the hidden `#p-live` region. The canvas focus ring shows only after a key press
+  (`.cv.kbd`), because OpenSeadragon focuses its canvas from script on every click.
 - **comments.html** (`assets/comments.js`) `fetch`es `comments.json`, reads `?q=` from the URL
   to seed the box, and does an in-memory substring search, paginating 200 results at a time.
 - `comments.json` records are `{comment, category:[...]}`. The UI currently shows **only the
