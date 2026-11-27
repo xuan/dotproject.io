@@ -50,6 +50,7 @@ comments.html          results page — client-side search UI (front matter + bo
 404.html               not-found page (permalink: /404.html)
 assets/canvas.css      styles for the canvas viewer
 assets/canvas.js       OpenSeadragon viewer + dot hit-testing over images/canvas<N>/
+assets/lib/            self-hosted OpenSeadragon 4.1.0 (byte-identical to cdnjs; sha512 in canvas.html)
 assets/comments.css    styles for the results page
 assets/comments.js     client-side search over comments.json (+ "find this dot on canvas N" links)
 assets/home.js         landing-page carousel arrows (the only script on the landing page)
@@ -233,8 +234,19 @@ Two pages, one dataset, deliberately split so the heavy JSON never loads on the 
   panel is `inert` while closed, and focus returns to the canvas when it closes. Opened dots are
   announced through the hidden `#p-live` region. The canvas focus ring shows only after a key press
   (`.cv.kbd`), because OpenSeadragon focuses its canvas from script on every click.
-- **comments.html** (`assets/comments.js`) `fetch`es `comments.json`, reads `?q=` from the URL
-  to seed the box, and does an in-memory substring search, paginating 200 results at a time.
+- **comments.html** (`assets/comments.js`) reads `?q=` from the URL to seed the box and **streams**
+  `comments.json`: it scans the download for each `{…}` record as it arrives, so matches show within
+  a second while the rest (~3 MB gzipped) is still coming ("12 found in the first 2,400…"). The final
+  count is "N of 49,148"; the search is an in-memory substring match, 200 results per page. The
+  streamer relies on the file being one flat array of `{comment, category:[...]}` objects. If the
+  download fails, the status line says so with a "Try again" button.
+- **Viewer load failures** (tiles, `dots.json` or `texts.json`) show `.cv-error` at the top of the
+  stage: what failed, "Try again", and a link to search. OpenSeadragon's own error text is hidden.
+- **Phone bottom sheet** is as tall as its comment (max 62vh, long ones scroll). `canvas.js` keeps
+  `--sheet-h` and the viewport margins in step with it; the zoom buttons ride above it in a row.
+- **Red / blue key:** the landing page says "Red: under 18, or abused by a family member. Blue: 18 or
+  older." (owner-approved wording, 2026-11-27); the viewer's counts carry it as a tooltip and
+  screen-reader text.
 - `comments.json` records are `{comment, category:[...]}`. The UI currently shows **only the
   comment text** — category tags/badges and the category filter chips were intentionally removed.
   `category` still exists in the data; don't rely on it being displayed.
