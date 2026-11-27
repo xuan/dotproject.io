@@ -36,21 +36,10 @@ scripts:
   <div class="cv-stage-wrap">
     <div id="osd"></div>
 
-    <div class="cv-loading" id="loading">Loading the canvas…</div>
-
-    <!-- switch canvases: same arrows as the landing-page carousel, shown on hover -->
-    <button class="car-arrow cv-prev" id="cprev" type="button" aria-label="Previous canvas">&#8249;</button>
-    <button class="car-arrow cv-next" id="cnext" type="button" aria-label="Next canvas">&#8250;</button>
-    <div class="cv-which" id="cwhich" aria-live="polite"></div>
-
-    <div class="cv-tools">
-      <button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
-      <button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button>
-      <button id="zhome" title="Reset view (Esc)" aria-label="Reset view">&#9678;</button>
-    </div>
-
-    <!-- inside the stage, so it opens below the header and the search stays usable -->
-    <aside class="cv-panel" id="panel" aria-live="polite">
+    <!-- inside the stage, so it opens below the header and the search stays usable; right after the
+         canvas so Tab goes canvas → open dot. inert while closed (it only slides off-screen), so
+         keyboard and screen-reader users never land in it -->
+    <aside class="cv-panel" id="panel" aria-label="Selected dot" inert>
       <div class="cv-panel-head">
         <span class="cv-cat" id="p-cat"></span>
         <button class="cv-close" id="p-close" aria-label="Close">&times;</button>
@@ -65,5 +54,20 @@ scripts:
       </div>
       <a class="cv-report" id="p-report" target="_blank" rel="noopener" hidden>Is this your comment? Fix the wording or report the wrong colour</a>
     </aside>
+    <!-- announces the opened dot (the panel itself is inert while it slides in) -->
+    <p class="sr-only" id="p-live" aria-live="polite"></p>
+
+    <div class="cv-loading" id="loading">Loading the canvas…</div>
+
+    <!-- switch canvases: same arrows as the landing-page carousel, shown on hover -->
+    <button class="car-arrow cv-prev" id="cprev" type="button" aria-label="Previous canvas">&#8249;</button>
+    <button class="car-arrow cv-next" id="cnext" type="button" aria-label="Next canvas">&#8250;</button>
+    <div class="cv-which" id="cwhich" aria-live="polite"></div>
+
+    <div class="cv-tools">
+      <button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
+      <button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button>
+      <button id="zhome" title="Reset view (Esc)" aria-label="Reset view">&#9678;</button>
+    </div>
   </div>
 </div>
