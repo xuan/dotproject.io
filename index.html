@@ -22,6 +22,10 @@ scripts:
       <div class="t-blue"><dt>Blue</dt><dd>{{ t.shown.blue }}</dd></div>
       <div class="t-all"><dt>Total</dt><dd>{{ t.shown.dots }}</dd></div>
     </dl>
+    <p class="totals-key">
+      <span>Red: under 18, or abused by a family member.</span>
+      <span>Blue: 18 or older.</span>
+    </p>
   </section>
   <figure class="reveal">
     <div class="carousel" data-carousel>
@@ -35,7 +39,7 @@ scripts:
                   {{ '/images/canvas1/canvas1-1440.jpg' | relative_url }} 1440w"
           sizes="(max-width: 500px) calc(100vw - 64px), 440px"
           width="3775" height="5088"
-          loading="lazy" decoding="async"
+          loading="eager" fetchpriority="high" decoding="async"
           alt="Dot Project — canvas 1" />
           <span class="canvas-cta">Open canvas 1 →</span>
         </a>

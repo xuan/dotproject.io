@@ -6,7 +6,8 @@ noindex: true
 styles:
   - /assets/canvas.css
 scripts:
-  - https://cdnjs.cloudflare.com/ajax/libs/openseadragon/4.1.0/openseadragon.min.js
+  # self-hosted copy of OpenSeadragon 4.1.0 (byte-identical to cdnjs: sha512-VKBuvrXd…BcRQ==)
+  - /assets/lib/openseadragon-4.1.0.min.js
   - /assets/canvas.js
 ---
 <div class="cv">
@@ -25,8 +26,8 @@ scripts:
   <div class="cv-info" id="cinfo" hidden>
     <span class="cv-info-name" id="i-name"></span>
     <dl class="cv-counts">
-      <div class="t-red"><dt>Red</dt><dd id="i-red"></dd></div>
-      <div class="t-blue"><dt>Blue</dt><dd id="i-blue"></dd></div>
+      <div class="t-red" title="Red: under 18, or abused by a family member"><dt><span class="cv-word">Red</span><span class="sr-only">: under 18, or abused by a family member</span></dt><dd id="i-red"></dd></div>
+      <div class="t-blue" title="Blue: 18 or older"><dt><span class="cv-word">Blue</span><span class="sr-only">: 18 or older</span></dt><dd id="i-blue"></dd></div>
       <div class="t-all"><dt>Total</dt><dd id="i-total"></dd></div>
     </dl>
     <a class="cv-buy" id="i-buy" target="_blank" rel="noopener" hidden>Buy a print</a>
@@ -35,6 +36,15 @@ scripts:
 
   <div class="cv-stage-wrap">
     <div id="osd"></div>
+
+    <!-- shown when the canvas or its comments fail to load (canvas.js showError) -->
+    <div class="cv-error" id="cerror" role="alert" hidden>
+      <p id="cerror-msg"></p>
+      <div class="cv-error-actions">
+        <button type="button" id="cerror-retry">Try again</button>
+        <a href="{{ '/comments.html' | relative_url }}">Search the comments instead</a>
+      </div>
+    </div>
 
     <!-- inside the stage, so it opens below the header and the search stays usable; right after the
          canvas so Tab goes canvas → open dot. inert while closed (it only slides off-screen), so

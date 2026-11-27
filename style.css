@@ -203,6 +203,18 @@ main {
   font-variant-numeric: tabular-nums;
 }
 
+/* what the colours mean, under the counts */
+.totals-key {
+  margin: 0.9rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--muted);
+}
+
+.totals-key span {
+  display: block;
+}
+
 .reveal {
   margin: 2.25rem 0 0;
   width: min(440px, 100%);
