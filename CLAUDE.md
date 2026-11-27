@@ -54,7 +54,13 @@ assets/lib/            self-hosted OpenSeadragon 4.1.0 (byte-identical to cdnjs;
 assets/comments.css    styles for the results page
 assets/comments.js     client-side search over comments.json (+ "find this dot on canvas N" links)
 assets/home.js         landing-page carousel arrows (the only script on the landing page)
-style.css              global styles (landing page + carousel + shared tokens in :root)
+style.css              global styles (landing page + carousel) and the site's whole palette in :root:
+                         --bg --surface --fg --muted --line --edge --mark --red --blue. All CSS uses these
+                         names, never raw hex. --red / --blue mean under 18 (or abused by a family member) /
+                         18+; use them only for that and the landing wordmark (owner, 2026-11-27: the
+                         red/blue "o"s stay on the landing page only; inner headers are plain)
+favicon.ico/.svg       the icon: one red dot (owner's choice); apple-touch-icon.png = the dot on white
+images/share.jpg       1200×630 link-preview image (og:image), a close crop of canvas 1 from its tiles
 comments.json          search data — ~10 MB, 49,148 reviewed records (tracked, served as-is)
 PRODUCT.md             product context for design work (users, purpose, care rules); excluded from the build
 .impeccable/           design-tool config (detector ignores, live-mode target); dot-folder, never built
