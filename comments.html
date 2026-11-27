@@ -8,7 +8,7 @@ styles:
 scripts:
   - /assets/comments.js
 ---
-<div class="wrap">
+<main class="wrap">
   <div class="top">
     <h1 class="wordmark">Dot Project</h1>
     <a href="{{ '/' | relative_url }}">← home</a>
@@ -21,12 +21,13 @@ scripts:
 
   <div class="controls">
     <input id="q" type="search" autocomplete="off" spellcheck="false"
-           placeholder="Search for a line you remember writing…" aria-label="Search comments" />
-    <span class="count" id="count" role="status">loading…</span>
+           placeholder="A line you remember…" aria-label="Search comments" />
+    <span class="count" id="count" role="status"></span>
   </div>
 
+  {% include site-data.html %}
   <ul class="results" id="results"></ul>
   <div class="status" id="status" role="status">Loading comments…</div>
   <button class="more" id="more" hidden>Show more</button>
   <button class="more" id="retry" type="button" hidden>Try again</button>
-</div>
+</main>

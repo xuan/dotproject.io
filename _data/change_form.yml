@@ -1,0 +1,8 @@
+# "Is this your comment?" (viewer) and "Request a change" (search results) open the owner's Google
+# Form, prefilled with the canvas number, the dot index (the ?dot= value) and the comment index (ci in
+# comments.json). The entry ids come from the form's "Get pre-filled link". Set url to "" to hide both
+# links. Both pages read this through _includes/site-data.html; nothing else needs editing.
+url: "https://docs.google.com/forms/d/e/1FAIpQLSd-dLZonVQzHA44ixR2Yg-7XvNwHKt8mBlhTzfrZzzIpOtpcQ/viewform"
+canvas: "entry.647534290"
+dot: "entry.178890866"
+ci: "entry.545841760"

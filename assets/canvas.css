@@ -31,7 +31,7 @@ body {
 }
 .cv-search input {
   flex: 1 1 auto; min-width: 0; font: inherit; font-size: 0.9rem; padding: 8px 12px;
-  border: 1px solid var(--edge); border-radius: 9px; background: var(--bg); color: var(--fg); outline: none;
+  border: 1px solid var(--field); border-radius: 9px; background: var(--bg); color: var(--fg); outline: none;
 }
 .cv-search input::placeholder { color: var(--muted); }
 .cv-search input:focus { border-color: var(--fg); }
@@ -47,9 +47,9 @@ body {
   display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
   padding: 8px 16px; border-bottom: 1px solid var(--line); background: var(--bg);
 }
-.cv-info[hidden], .cv-buy[hidden] { display: none; }
 .cv-info-name { font-size: 0.9rem; font-weight: 600; letter-spacing: -0.01em; }
-.cv-counts { margin: 0; display: flex; align-items: baseline; gap: 18px; }
+/* wraps at large text sizes instead of running off the edge */
+.cv-counts { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 18px; min-width: 0; }
 .cv-counts > div { display: flex; align-items: baseline; gap: 6px; }
 .cv-counts dt { font-size: 0.78rem; color: var(--muted); }
 .cv-counts dt::before {
@@ -68,7 +68,8 @@ body {
 .cv-buy:hover, .cv-buy:focus-visible { background: var(--fg); color: var(--bg); }
 
 /* stage */
-.cv-stage-wrap { position: relative; flex: 1 1 auto; min-height: 0; }
+/* the stage is the page's <main>: undo style.css's centred landing-page main */
+.cv-stage-wrap { position: relative; flex: 1 1 auto; min-height: 0; display: block; text-align: start; }
 /* OpenSeadragon forces position:relative on its container, so size it explicitly. */
 #osd { position: absolute; inset: 0; width: 100%; height: 100%; background: var(--surface); }
 #osd .openseadragon-canvas:focus { outline: none; }
@@ -162,7 +163,6 @@ body {
   color: var(--muted); text-decoration: none; text-align: center;
 }
 .cv-report:hover { color: var(--fg); text-decoration: underline; }
-.cv-report[hidden] { display: none; }
 .cv-note {
   margin: 0 18px 18px; font-size: 0.8rem; line-height: 1.5; color: var(--muted);
 }
@@ -182,7 +182,6 @@ body {
   background: var(--bg); border: 1px solid var(--line); border-radius: 12px;
   box-shadow: 0 6px 24px rgba(0,0,0,0.12);
 }
-.cv-error[hidden] { display: none; }
 .cv-error p { margin: 0; font-size: 0.92rem; line-height: 1.45; }
 .cv-error-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 12px; }
 .cv-error-actions button {
@@ -196,7 +195,9 @@ body {
 @media (max-width: 640px) {
   .cv-sub { display: none; }
   .cv-head { gap: 12px; padding: 10px 12px; }
-  .cv-search { flex-basis: 150px; }
+  /* phones: the search always gets its own full-width line under the wordmark (min-width: 0 so it
+     can't poke past the edge at large text sizes) */
+  .cv-search { flex-basis: 100%; max-width: none; min-width: 0; }
   /* phone: the "Canvas N of M" pill already names the canvas; keep the swatches, drop the words */
   .cv-info { gap: 12px; padding: 7px 12px; }
   .cv-info-name { display: none; }
